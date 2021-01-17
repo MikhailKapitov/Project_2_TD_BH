@@ -14,6 +14,7 @@ pygame.display.set_caption('Tower Defense Bullet Hell')
 # Это временное название, честно. :)))
 enemy_bullets = pygame.sprite.Group()
 cursor_group = pygame.sprite.Group()
+enemy_group = pygame.sprite.Group()
 pygame.mouse.set_visible(False)
 INVINCIBILITY_TIME = pygame.USEREVENT + 1
 pygame.time.set_timer(INVINCIBILITY_TIME, 0)
@@ -90,8 +91,8 @@ class Bullet(pygame.sprite.Sprite):
         self.damage = damage
         return
 
-    def update(self, time):
-        current_dist = time * self.speed * self.coefficient
+    def update(self):
+        current_dist = self.speed * self.coefficient
         self.current_position[0] += self.direction[0] * current_dist
         self.current_position[1] += self.direction[1] * current_dist
         self.rect.topleft = (int(self.current_position[0]), int(self.current_position[1]))
@@ -146,10 +147,77 @@ class Cursor(pygame.sprite.Sprite):
         return
 
 
+class Enemy(pygame.sprite.Sprite):
+    useless_image = load_image('Blank_image.png', -1)
+
+    def __init__(self, speed, hp, road, *group):
+        super().__init__(*group)
+        self.image = Enemy.useless_image
+        self.rect = self.image.get_rect()
+        self.curr_position = road[0]
+        self.target = 1
+        self.rect.topleft = (int(self.curr_position[0]), int(self.curr_position[1]))
+        self.mask = pygame.mask.from_surface(self.image)
+        self.hp = hp
+        self.speed = speed / fps
+        self.road = road
+        return
+
+    def update(self):
+        distance = self.speed
+        while distance >= 0.0000000000001 and self.target < len(self.road):
+            dx = self.road[self.target][0] - self.curr_position[0]
+            dy = self.road[self.target][1] - self.curr_position[1]
+            distance_req = (dx * dx + dy * dy) ** 0.5
+            coefficient = min(distance / distance_req, 1)
+            distance -= coefficient * distance_req
+            if coefficient == 1:
+                self.target += 1
+            self.curr_position[0] += dx * coefficient
+            self.curr_position[1] += dy * coefficient
+        self.rect.topleft = (int(self.curr_position[0]), int(self.curr_position[1]))
+        return
+
+    def attack(self, bullet):
+        self.hp = max(self.hp - bullet.damage, 0)
+        if self.hp == 0:
+            self.curr_position = [-1000, -1000]
+        return
+
+    def fire(self):
+        return
+
+
+class EnemyJack(Enemy):
+    jack_image = load_image('Jack.png', -1)
+
+    def __init__(self, road, *group):
+        super().__init__(50, 1000, road, *group)
+        self.image = EnemyJack.jack_image
+        self.frequency = fps * 5
+        self.cooldown = fps * 5
+
+    def update(self):
+        super().update()
+        self.cooldown -= 1
+        if self.cooldown == 0:
+            self.fire()
+            self.cooldown = self.frequency
+        return
+
+    def fire(self):
+        directions = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]
+        for direction in directions:
+            bullets_list.append(Bullet([self.curr_position[0] + 24, self.curr_position[
+                1] + 24], 100, direction, 8, 20, enemy_bullets))
+        return
+
+
 if __name__ == '__main__':
     bullets_list = []
     # Здесь хранятся все "пули"
     cursor = Cursor(cursor_group)
+    enemies_list = [EnemyJack([[-100, 255], [511, 255], [511, 511], [1800, 511]], enemy_group)]
     running = True
     while running:
         for event in pygame.event.get():
@@ -163,11 +231,20 @@ if __name__ == '__main__':
         bullet_iter = 0
         while bullet_iter < len(bullets_list):
             current_bullet = bullets_list[bullet_iter]
-            if current_bullet.update(fps):
+            if current_bullet.update():
                 del bullets_list[bullet_iter]
             else:
                 bullet_iter += 1
+        enemy_iter = 0
+        while enemy_iter < len(enemies_list):
+            current_enemy = enemies_list[enemy_iter]
+            if current_enemy.hp == 0:
+                del enemies_list[enemy_iter]
+            else:
+                current_enemy.update()
+                enemy_iter += 1
         enemy_bullets.draw(screen)
         cursor_group.draw(screen)
+        enemy_group.draw(screen)
         pygame.display.flip()
         fps_clock.tick(fps)
