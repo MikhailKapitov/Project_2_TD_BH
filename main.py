@@ -2,7 +2,7 @@
 import pygame
 import os
 
-# ПЖ СРАБОТАЙ УЖЕ
+# Неужели?
 
 pygame.init()
 size = width, height = 1920, 1080
