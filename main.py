@@ -2,8 +2,6 @@
 import pygame
 import os
 
-# Неужели?
-
 pygame.init()
 size = width, height = 1920, 1080
 # Пока что игра будет автоматически запускаться в full-screen. Потом, возможно, стоит добавить настройку
