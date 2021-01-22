@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 import pygame
 import os
+from subprocess import call
+
+f = open('resolution.txt', 'r')
+pygame.init()
+size = width, height = [int(a) for a in f.read().split('x')]
 
 pygame.init()
-size = width, height = 1920, 1080
 # Пока что игра будет автоматически запускаться в full-screen. Потом, возможно, стоит добавить настройку
 # разрешения.
 fps = 144
@@ -223,6 +227,11 @@ if __name__ == '__main__':
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+                continue
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                    continue
             elif event.type == pygame.MOUSEMOTION:
                 cursor.update(event.pos)
             elif event.type == INVINCIBILITY_TIME:
