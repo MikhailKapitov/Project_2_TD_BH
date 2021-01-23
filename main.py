@@ -4,8 +4,7 @@ import os
 
 pygame.init()
 size = width, height = 1920, 1080
-# Пока что игра будет автоматически запускаться в full-screen. Потом, возможно, стоит добавить настройку
-# разрешения.
+# Пока что игра будет автоматически запускаться в full-screen. А дальше это проблемы Ивана. :)))
 fps = 144
 # Вообще было бы логично юзать 60, но у моего монитора 144 герц, гы.
 fps_clock = pygame.time.Clock()
@@ -13,14 +12,19 @@ screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Tower Defense Bullet Hell')
 # Это временное название, честно. :)))
 enemy_bullets = pygame.sprite.Group()
+# Группа спрайтов вражеских пуль.
 cursor_group = pygame.sprite.Group()
+# Группа для курсора.
 enemy_group = pygame.sprite.Group()
+# Группа врагов.
+friendly_bullets = pygame.sprite.Group()
+# Группа дружелюбных пуль.
 pygame.mouse.set_visible(False)
-INVINCIBILITY_TIME = pygame.USEREVENT + 1
-pygame.time.set_timer(INVINCIBILITY_TIME, 0)
+# Скрываем основной курсор ОС, у нас он круче.
 
 
 def load_image(name, color_key=None):
+    # Стандартная функция подгрузки картинок.
     fullname = os.path.join('Data', name)
     try:
         image = pygame.image.load(fullname)
@@ -37,6 +41,7 @@ def load_image(name, color_key=None):
 
 
 class Board:
+    # Стандартный класс-основа клеточного поля.
 
     def __init__(self, cols, rows, siz, x_indent, y_indent):
         self.columns = cols
@@ -74,21 +79,32 @@ class Board:
 
 
 class Bullet(pygame.sprite.Sprite):
+    # Основной класс простейшей пули.
     image = load_image('Simple_bullet.png', -1)
 
     def __init__(self, current_position, speed, direction, radius, damage, *group):
         super().__init__(*group)
+        # Инициация спрайта.
         self.image = pygame.transform.scale(Bullet.image, (radius + radius, radius + radius))
+        # Изменение картинки для получения нужного радиуса.
         self.rect = self.image.get_rect()
         self.direction = direction
+        # Направление движения пули.
         self.speed = speed / fps
+        # Перевод скорости в секунду в скорость в тик.
         self.current_position = current_position
+        # Позиция пули.
         self.rect.topleft = (int(self.current_position[0]), int(self.current_position[1]))
         self.coefficient = 1 / ((self.direction[0] ** 2 + self.direction[1] ** 2) ** 0.5)
+        # Это нужно, чтобы от self.direction не зависила скорость.
         self.radius = radius
+        # Размер пули.
         self.colour = (255, 255, 255)
+        # Цвет пули.
         self.mask = pygame.mask.from_surface(self.image)
+        # Маска пули для проверки столкновений.
         self.damage = damage
+        # Урон, наносимый пулей.
         return
 
     def update(self):
@@ -96,76 +112,100 @@ class Bullet(pygame.sprite.Sprite):
         self.current_position[0] += self.direction[0] * current_dist
         self.current_position[1] += self.direction[1] * current_dist
         self.rect.topleft = (int(self.current_position[0]), int(self.current_position[1]))
-        if pygame.sprite.collide_mask(self, cursor):
-            cursor.attack(self)
+        # Обновляем положение пули.
+        # Вернем True, если пуля вышла за экран, и нам она больше не интересна.
         return (self.current_position[0] > size[0] or self.current_position[
             0] + self.radius + self.radius < 0 or self.current_position[1] > size[1] or self.current_position[
             1] + self.radius + self.radius < 0)
 
     def set_pos(self, position=(-1000, -1000)):
+        # Телепортируем пулю. Эта штука введена, чтобы убирать ее куда подальше, когда она нам уже не нужна, а то
+        # у меня был какой-то там баг, где она не особо пропадала, ну короче пофиг, типо пофиксил, окда.
         self.current_position = position
         self.rect.topleft = (int(self.current_position[0]), int(self.current_position[1]))
         return
 
 
 class Cursor(pygame.sprite.Sprite):
+    # Стандартный класс курсора.
     standard_image = load_image('Standard_cursor.png', -1)
     invincible_standard_image = load_image('Standard_cursor_invincible.png', -1)
 
     def __init__(self, *group):
         super().__init__(*group)
         self.image = Cursor.standard_image
+        # Устанавливаем спрайт.
         self.rect = self.image.get_rect()
         self.curr_position = [0, 0]
         self.rect.topleft = (self.curr_position[0] - 16, self.curr_position[1] - 16)
         self.mask = pygame.mask.from_surface(self.image)
+        # Настраиваем маску для столкновений.
         self.hp = 1000
-        self.invincible = False
+        # ХП курсора.
+        self.invincible = 0
+        # Время неуязвимости курсора (в тиках).
         return
 
     def update(self, position):
         self.curr_position = position
         self.rect.topleft = (self.curr_position[0] - 16, self.curr_position[1] - 16)
+        # Обновляем позицию курсора.
         return
 
     def attack(self, bullet):
+        # Бьем курсор!
         if self.invincible:
+            # А, нет, он неуязвим. Упс.
             return
         self.hp = max(self.hp - bullet.damage, 0)
+        # Бьем курсор!
         if self.hp == 0:
             # Вызов экрана game-over.
             pass
-        self.invincible = True
+        self.invincible = fps
+        # Даем курсору временную неуязвимость.
         self.image = Cursor.invincible_standard_image
-        pygame.time.set_timer(INVINCIBILITY_TIME, 1000)
+        # Отображаем курсор иначе, чтобы показать его неуязвимость. Обновлять маску нет нужды, его все равно нельзя
+        # ударить.
         return
 
-    def stop_invincibility(self):
-        self.invincible = False
-        self.image = Cursor.standard_image
-        pygame.time.set_timer(INVINCIBILITY_TIME, 0)
+    def update_invincibility(self):
+        # Обновляем время неуязвимости.
+        self.invincible -= 1
+        if self.invincible == 0:
+            self.image = Cursor.standard_image
+            # Все, он больше не неуязвим, вернем ему нормальный спрайт.
         return
 
 
 class Enemy(pygame.sprite.Sprite):
-    useless_image = load_image('Blank_image.png', -1)
+    # Стандартный класс врага.
+    useless_image = load_image('Blank_image.png', -1)  # Гыыыыы.
 
     def __init__(self, speed, hp, road, *group):
         super().__init__(*group)
         self.image = Enemy.useless_image
         self.rect = self.image.get_rect()
+        # Установка спрайта.
         self.curr_position = road[0]
+        # Начальная позиция врага.
         self.target = 1
+        # Номер вершины дороги, к которому должен идти враг.
         self.rect.topleft = (int(self.curr_position[0]), int(self.curr_position[1]))
         self.mask = pygame.mask.from_surface(self.image)
+        # Маска врага для столкновений.
         self.hp = hp
+        # ХП врага.
         self.speed = speed / fps
+        # Перевод скорости из пикселей в секунду в пиксели в тик.
         self.road = road
+        # Путь врага. (Звучит выпендрежно, нужно написать такую книгу.)
         return
 
     def update(self):
         distance = self.speed
         while distance >= 0.0000000000001 and self.target < len(self.road):
+            # Оновляем врага, пока значеия не станут бессмысленными (спасибо погрешностям).
             dx = self.road[self.target][0] - self.curr_position[0]
             dy = self.road[self.target][1] - self.curr_position[1]
             distance_req = (dx * dx + dy * dy) ** 0.5
@@ -175,20 +215,26 @@ class Enemy(pygame.sprite.Sprite):
                 self.target += 1
             self.curr_position[0] += dx * coefficient
             self.curr_position[1] += dy * coefficient
+            # Умные переходы.
         self.rect.topleft = (int(self.curr_position[0]), int(self.curr_position[1]))
+        # Все, обновили позицию.
         return
 
     def attack(self, bullet):
+        # Бьем врага.
         self.hp = max(self.hp - bullet.damage, 0)
         if self.hp == 0:
             self.curr_position = [-1000, -1000]
+            # Тут тот же прикол, как и с пулей.
         return
 
     def fire(self):
+        # ВРАГ СТРЕЛЯЕТ!
         return
 
 
 class EnemyJack(Enemy):
+    # Класс врага-Джека.
     jack_image = load_image('Jack.png', -1)
 
     def __init__(self, road, *group):
@@ -196,55 +242,71 @@ class EnemyJack(Enemy):
         self.image = EnemyJack.jack_image
         self.frequency = fps * 5
         self.cooldown = fps * 5
+        # Он будет стрелять каждые пять секунд.
 
     def update(self):
         super().update()
         self.cooldown -= 1
         if self.cooldown == 0:
             self.fire()
+            # Стреляем, если пора стрелять.
             self.cooldown = self.frequency
         return
 
     def fire(self):
         directions = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]
+        # Стреляем в восемь направлений.
         for direction in directions:
-            bullets_list.append(Bullet([self.curr_position[0] + 24, self.curr_position[
+            enemy_bullets_list.append(Bullet([self.curr_position[0] + 24, self.curr_position[
                 1] + 24], 100, direction, 8, 20, enemy_bullets))
         return
 
 
 if __name__ == '__main__':
-    bullets_list = []
-    # Здесь хранятся все "пули"
+    enemy_bullets_list = []
+    # Здесь хранятся все "пули" врагов.
     cursor = Cursor(cursor_group)
+    # Здесь - курсор.
     enemies_list = [EnemyJack([[-100, 255], [511, 255], [511, 511], [1800, 511]], enemy_group)]
+    # А здесь - враги.
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.MOUSEMOTION:
+                # Крусор двигается.
                 cursor.update(event.pos)
-            elif event.type == INVINCIBILITY_TIME:
-                cursor.stop_invincibility()
         screen.fill((0, 0, 0))
         bullet_iter = 0
-        while bullet_iter < len(bullets_list):
-            current_bullet = bullets_list[bullet_iter]
+        while bullet_iter < len(enemy_bullets_list):
+            # Цикл для вражеских пуль.
+            current_bullet = enemy_bullets_list[bullet_iter]
             if current_bullet.update():
-                del bullets_list[bullet_iter]
+                del enemy_bullets_list[bullet_iter]
+                # Удалим пулю, она не нужна.
             else:
+                if pygame.sprite.collide_mask(current_bullet, cursor):
+                    cursor.attack(current_bullet)
+                    # Ударим курсор, если задели его.
                 bullet_iter += 1
         enemy_iter = 0
         while enemy_iter < len(enemies_list):
+            # Цикл для врагов.
             current_enemy = enemies_list[enemy_iter]
             if current_enemy.hp == 0:
                 del enemies_list[enemy_iter]
+                # Удалим врага, если он умер.
             else:
                 current_enemy.update()
                 enemy_iter += 1
+        if cursor.invincible:
+            cursor.update_invincibility()
+            # Обновим неуязвимость курсора, если он неуязвим.
         enemy_bullets.draw(screen)
         cursor_group.draw(screen)
         enemy_group.draw(screen)
         pygame.display.flip()
+        # Обновим экран.
         fps_clock.tick(fps)
+        # Тик.
