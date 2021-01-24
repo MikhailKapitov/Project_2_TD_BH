@@ -19,6 +19,8 @@ enemy_group = pygame.sprite.Group()
 # Группа врагов.
 friendly_bullets = pygame.sprite.Group()
 # Группа дружелюбных пуль.
+towers_group = pygame.sprite.Group()
+# Группа башен.
 pygame.mouse.set_visible(False)
 # Скрываем основной курсор ОС, у нас он круче.
 
@@ -75,6 +77,42 @@ class Board:
         return cell
 
     def on_click(self, cell):
+        return
+
+
+class Field(Board):
+
+    def __init__(self, level_name):
+        super().__init__(28, 12, 64, 64, 64)
+        level_map_file = open('levels\\' + level_name + '_map.txt')
+        level_map_data = level_map_file.read().split('\n')
+        level_map_file.close()
+        for i in range(len(level_map_data)):
+            for j in range(len(level_map_data[i])):
+                if level_map_data[i][j] == '#':
+                    self.cells_data[j][i] = 1
+                elif level_map_data[i][j] == '%':
+                    self.cells_data[j][i] = 3
+        return
+
+    def render(self, surface):
+        for i in range(self.columns):
+            for j in range(self.rows):
+                if self.cells_data[i][j] == 2 or self.cells_data[i][j] == 0:
+                    pygame.draw.rect(surface, (255, 255, 255), (i * self.cell_size + self.indent[
+                        0], j * self.cell_size + self.indent[1], self.cell_size, self.cell_size), 1)
+                if self.cells_data[i][j] == 3:
+                    pygame.draw.rect(surface, (32, 32, 32), (i * self.cell_size + self.indent[
+                        0], j * self.cell_size + self.indent[1], self.cell_size, self.cell_size))
+                    pygame.draw.rect(surface, (128, 128, 128), (i * self.cell_size + self.indent[
+                        0], j * self.cell_size + self.indent[1], self.cell_size, self.cell_size), 1)
+        return
+
+    def on_click(self, cell):
+        if self.cells_data[cell[0]][cell[1]] == 0 and cursor.selected_tower != 0:
+            towers_list.append(cursor.selected_tower([cell[0] * self.cell_size + 64, cell[
+                1] * self.cell_size + 64], towers_group))
+            self.cells_data[cell[0]][cell[1]] = 2
         return
 
 
@@ -144,6 +182,8 @@ class Cursor(pygame.sprite.Sprite):
         # ХП курсора.
         self.invincible = 0
         # Время неуязвимости курсора (в тиках).
+        self.selected_tower = 0
+        # Башня, которую сейчас выбрал курсор.
         return
 
     def update(self, position):
@@ -225,6 +265,7 @@ class Enemy(pygame.sprite.Sprite):
         self.hp = max(self.hp - bullet.damage, 0)
         if self.hp == 0:
             self.curr_position = [-1000, -1000]
+            self.rect.topleft = (int(self.curr_position[0]), int(self.curr_position[1]))
             # Тут тот же прикол, как и с пулей.
         return
 
@@ -262,6 +303,53 @@ class EnemyJack(Enemy):
         return
 
 
+class Tower(pygame.sprite.Sprite):
+    # Стандартный класс башни.
+    useless_image = load_image('Tower_sample.png', -1)
+
+    def __init__(self, cooldown, position, *group):
+        super().__init__(*group)
+        self.image = Tower.useless_image
+        self.rect = self.image.get_rect()
+        # Установка спрайта.
+        self.curr_position = position
+        # Позиция башни.
+        self.rect.topleft = (int(self.curr_position[0]), int(self.curr_position[1]))
+        self.cooldown = int(cooldown * fps)
+        self.frequency = int(cooldown * fps)
+        # Перевод времени в тики.
+        return
+
+    def update(self):
+        self.cooldown -= 1
+        if self.cooldown <= 0:
+            self.cooldown = self.frequency
+            self.fire()
+        return
+
+    def fire(self):
+        # Башня стреляет!
+        return
+
+
+class PlusTower(Tower):
+    # Башня, быстро стреляющая слабыми пулями "плюсиком".
+    tower_image = pygame.transform.scale(load_image('Plus_tower.png', -1), (64, 64))
+
+    def __init__(self, position, *group):
+        super().__init__(1, position, *group)
+        self.image = PlusTower.tower_image
+        return
+
+    def fire(self):
+        directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]
+        for direction in directions:
+            friendly_bullets_list.append(Bullet([self.curr_position[
+                0] + 27, self.curr_position[
+                    1] + 27], 100, direction, 5, 10, friendly_bullets))
+        return
+
+
 if __name__ == '__main__':
     enemy_bullets_list = []
     # Здесь хранятся все "пули" врагов.
@@ -269,6 +357,12 @@ if __name__ == '__main__':
     # Здесь - курсор.
     enemies_list = [EnemyJack([[-100, 255], [511, 255], [511, 511], [1800, 511]], enemy_group)]
     # А здесь - враги.
+    towers_list = []
+    # Тут у нас башни.
+    friendly_bullets_list = []
+    # Тут - хорошие пули.
+    field = Field('level1')
+    # А это поле.
     running = True
     while running:
         for event in pygame.event.get():
@@ -277,6 +371,8 @@ if __name__ == '__main__':
             elif event.type == pygame.MOUSEMOTION:
                 # Крусор двигается.
                 cursor.update(event.pos)
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                field.get_click(event.pos)
         screen.fill((0, 0, 0))
         bullet_iter = 0
         while bullet_iter < len(enemy_bullets_list):
@@ -300,13 +396,39 @@ if __name__ == '__main__':
             else:
                 current_enemy.update()
                 enemy_iter += 1
+        bullet_iter = 0
+        while bullet_iter < len(friendly_bullets_list):
+            # Цикл для хороших пуль.
+            current_bullet = friendly_bullets_list[bullet_iter]
+            if current_bullet.update():
+                del friendly_bullets_list[bullet_iter]
+                # Удалим пулю, она не нужна.
+            else:
+                attacked = False
+                for enemy in enemies_list:
+                    if pygame.sprite.collide_mask(current_bullet, enemy):
+                        enemy.attack(current_bullet)
+                        current_bullet.current_position = [-1000, -1000]
+                        current_bullet.rect.topleft = (int(
+                            current_bullet.current_position[0]), int(current_bullet.current_position[1]))
+                        del friendly_bullets_list[bullet_iter]
+                        attacked = True
+                        break
+                if not attacked:
+                    bullet_iter += 1
+        for current_tower in towers_list:
+            current_tower.update()
         if cursor.invincible:
             cursor.update_invincibility()
             # Обновим неуязвимость курсора, если он неуязвим.
-        enemy_bullets.draw(screen)
+        towers_group.draw(screen)
+        field.render(screen)
         cursor_group.draw(screen)
         enemy_group.draw(screen)
+        friendly_bullets.draw(screen)
+        enemy_bullets.draw(screen)
         pygame.display.flip()
         # Обновим экран.
         fps_clock.tick(fps)
         # Тик.
+        cursor.selected_tower = PlusTower
