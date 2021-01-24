@@ -25,6 +25,16 @@ pygame.mouse.set_visible(False)
 # Скрываем основной курсор ОС, у нас он круче.
 
 
+def crop(image, color_key=None):
+    if color_key is not None:
+        if color_key == -1:
+            color_key = image.get_at((0, 0))
+        image.set_colorkey(color_key)
+    else:
+        image = image.convert_alpha()
+    return image
+
+
 def load_image(name, color_key=None):
     # Стандартная функция подгрузки картинок.
     fullname = os.path.join('Data', name)
@@ -33,13 +43,7 @@ def load_image(name, color_key=None):
     except pygame.error as message:
         print('Cannot load image:', name)
         raise SystemExit(message)
-    if color_key is not None:
-        if color_key == -1:
-            color_key = image.get_at((0, 0))
-        image.set_colorkey(color_key)
-    else:
-        image = image.convert_alpha()
-    return image
+    return crop(image, color_key)
 
 
 class Board:
@@ -80,6 +84,20 @@ class Board:
         return
 
 
+def search_for_road(pos, pr, board):
+    # DFS, ищущий путь.
+    directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]
+    for direction in directions:
+        new_pos = [pos[0] + direction[0], pos[1] + direction[1]]
+        if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] >= 28 or new_pos[1] >= 12 or new_pos == pr:
+            continue
+        if board.cells_data[new_pos[0]][new_pos[1]] == 1:
+            road.append([board.indent[0] + pos[0] * board.cell_size, board.indent[1] + pos[1] * board.cell_size])
+            search_for_road(new_pos, pos, board)
+            break
+    return
+
+
 class Field(Board):
 
     def __init__(self, level_name):
@@ -93,6 +111,11 @@ class Field(Board):
                     self.cells_data[j][i] = 1
                 elif level_map_data[i][j] == '%':
                     self.cells_data[j][i] = 3
+        # Теперь найдем путь, по которому пройдут монстры.
+        for j in range(28):
+            if self.cells_data[0][j] == 1:
+                search_for_road([0, j], [-1, -1], self)
+                break
         return
 
     def render(self, surface):
@@ -120,9 +143,12 @@ class Bullet(pygame.sprite.Sprite):
     # Основной класс простейшей пули.
     image = load_image('Simple_bullet.png', -1)
 
-    def __init__(self, current_position, speed, direction, radius, damage, *group):
+    def __init__(self, current_position, speed, direction, radius, damage, max_age, *group):
         super().__init__(*group)
         # Инициация спрайта.
+        self.age = 0
+        self.max_age = max_age
+        # "Возраст" пули.
         self.image = pygame.transform.scale(Bullet.image, (radius + radius, radius + radius))
         # Изменение картинки для получения нужного радиуса.
         self.rect = self.image.get_rect()
@@ -146,6 +172,11 @@ class Bullet(pygame.sprite.Sprite):
         return
 
     def update(self):
+        self.age += 1
+        if self.age >= self.max_age:
+            self.current_position = [-1000, -1000]
+            self.rect.topleft = (int(self.current_position[0]), int(self.current_position[1]))
+            return True
         current_dist = self.speed * self.coefficient
         self.current_position[0] += self.direction[0] * current_dist
         self.current_position[1] += self.direction[1] * current_dist
@@ -161,6 +192,15 @@ class Bullet(pygame.sprite.Sprite):
         # у меня был какой-то там баг, где она не особо пропадала, ну короче пофиг, типо пофиксил, окда.
         self.current_position = position
         self.rect.topleft = (int(self.current_position[0]), int(self.current_position[1]))
+        return
+
+
+class PlusBullet(Bullet):
+    image = load_image('PlusBullet.png', -1)
+
+    def __init__(self, current_position, speed, direction, radius, damage, max_age, *group):
+        super().__init__(current_position, speed, direction, radius, damage, max_age, group)
+        self.image = crop(pygame.transform.scale(PlusBullet.image, (radius + radius, radius + radius)), -1)
         return
 
 
@@ -222,7 +262,7 @@ class Enemy(pygame.sprite.Sprite):
     # Стандартный класс врага.
     useless_image = load_image('Blank_image.png', -1)  # Гыыыыы.
 
-    def __init__(self, speed, hp, road, *group):
+    def __init__(self, speed, hp, *group):
         super().__init__(*group)
         self.image = Enemy.useless_image
         self.rect = self.image.get_rect()
@@ -235,19 +275,18 @@ class Enemy(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         # Маска врага для столкновений.
         self.hp = hp
+        self.max_hp = hp
         # ХП врага.
         self.speed = speed / fps
         # Перевод скорости из пикселей в секунду в пиксели в тик.
-        self.road = road
-        # Путь врага. (Звучит выпендрежно, нужно написать такую книгу.)
         return
 
     def update(self):
         distance = self.speed
-        while distance >= 0.0000000000001 and self.target < len(self.road):
+        while distance >= 0.0000000000001 and self.target < len(road):
             # Оновляем врага, пока значеия не станут бессмысленными (спасибо погрешностям).
-            dx = self.road[self.target][0] - self.curr_position[0]
-            dy = self.road[self.target][1] - self.curr_position[1]
+            dx = road[self.target][0] - self.curr_position[0]
+            dy = road[self.target][1] - self.curr_position[1]
             distance_req = (dx * dx + dy * dy) ** 0.5
             coefficient = min(distance / distance_req, 1)
             distance -= coefficient * distance_req
@@ -273,22 +312,29 @@ class Enemy(pygame.sprite.Sprite):
         # ВРАГ СТРЕЛЯЕТ!
         return
 
+    def show_hp(self, surface):
+        part = self.hp / self.max_hp
+        pygame.draw.rect(surface, (255, 255, 255), (self.curr_position[0], self.curr_position[1] - 16, 64, 8))
+        pygame.draw.rect(surface, (0, 0, 0), (
+            self.curr_position[0] + int(64 * part), self.curr_position[1] - 14, int((1 - part) * 64), 5))
+        return
+
 
 class EnemyJack(Enemy):
     # Класс врага-Джека.
     jack_image = load_image('Jack.png', -1)
 
-    def __init__(self, road, *group):
-        super().__init__(50, 1000, road, *group)
+    def __init__(self, *group):
+        super().__init__(50, 1000, *group)
         self.image = EnemyJack.jack_image
-        self.frequency = fps * 5
-        self.cooldown = fps * 5
-        # Он будет стрелять каждые пять секунд.
+        self.frequency = fps
+        self.cooldown = fps
+        # Он будет стрелять каждую секунду.
 
     def update(self):
         super().update()
         self.cooldown -= 1
-        if self.cooldown == 0:
+        if self.cooldown <= 0:
             self.fire()
             # Стреляем, если пора стрелять.
             self.cooldown = self.frequency
@@ -299,7 +345,7 @@ class EnemyJack(Enemy):
         # Стреляем в восемь направлений.
         for direction in directions:
             enemy_bullets_list.append(Bullet([self.curr_position[0] + 24, self.curr_position[
-                1] + 24], 100, direction, 8, 20, enemy_bullets))
+                1] + 24], 100, direction, 8, 20, 2 * fps, enemy_bullets))
         return
 
 
@@ -337,32 +383,34 @@ class PlusTower(Tower):
     tower_image = pygame.transform.scale(load_image('Plus_tower.png', -1), (64, 64))
 
     def __init__(self, position, *group):
-        super().__init__(1, position, *group)
+        super().__init__(0.333, position, *group)
         self.image = PlusTower.tower_image
         return
 
     def fire(self):
         directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]
         for direction in directions:
-            friendly_bullets_list.append(Bullet([self.curr_position[
-                0] + 27, self.curr_position[
-                    1] + 27], 100, direction, 5, 10, friendly_bullets))
+            friendly_bullets_list.append(PlusBullet([self.curr_position[
+                0] + 22, self.curr_position[
+                    1] + 22], 100, direction, 10, 10, fps, friendly_bullets))
         return
 
 
 if __name__ == '__main__':
+    road = []
+    # Путь врага.
+    field = Field('level2')
+    # А это поле.
     enemy_bullets_list = []
     # Здесь хранятся все "пули" врагов.
     cursor = Cursor(cursor_group)
     # Здесь - курсор.
-    enemies_list = [EnemyJack([[-100, 255], [511, 255], [511, 511], [1800, 511]], enemy_group)]
+    enemies_list = [EnemyJack(enemy_group)]
     # А здесь - враги.
     towers_list = []
     # Тут у нас башни.
     friendly_bullets_list = []
     # Тут - хорошие пули.
-    field = Field('level1')
-    # А это поле.
     running = True
     while running:
         for event in pygame.event.get():
@@ -426,6 +474,8 @@ if __name__ == '__main__':
         cursor_group.draw(screen)
         enemy_group.draw(screen)
         friendly_bullets.draw(screen)
+        for current_enemy in enemies_list:
+            current_enemy.show_hp(screen)
         enemy_bullets.draw(screen)
         pygame.display.flip()
         # Обновим экран.
