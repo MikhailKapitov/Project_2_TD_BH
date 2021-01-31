@@ -2,14 +2,11 @@
 import pygame
 import os
 import sys
-
-f = open('resolution.txt', 'r')
-pygame.init()
-size = width, height = [int(a) for a in f.read().split('x')]
+import res_win
 
 pygame.init()
-# Пока что игра будет автоматически запускаться в full-screen. Потом, возможно, стоит добавить настройку
-# разрешения.
+size = width, height = 1920, 1080
+# Пока что игра будет автоматически запускаться в full-screen. А дальше это проблемы Ивана. :)))
 fps = 144
 # Вообще было бы логично юзать 60, но у моего монитора 144 герц, гы.
 fps_clock = pygame.time.Clock()
@@ -17,8 +14,11 @@ screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Tower Defense Bullet Hell')
 # Это временное название, честно. :)))
 enemy_bullets = pygame.sprite.Group()
+# Группа спрайтов вражеских пуль.
 cursor_group = pygame.sprite.Group()
+# Группа для курсора.
 enemy_group = pygame.sprite.Group()
+# Группа врагов.
 friendly_bullets = pygame.sprite.Group()
 # Группа дружелюбных пуль.
 towers_group = pygame.sprite.Group()
@@ -103,7 +103,7 @@ def search_for_road(pos, pr, board):
 class Field(Board):
 
     def __init__(self, level_name):
-        super().__init__(28, 12, int(width // 30), 64, 64)
+        super().__init__(28, 12, 64, 64, 64)
         level_map_file = open('levels\\' + level_name + '_map.txt')
         level_map_data = level_map_file.read().split('\n')
         level_map_file.close()
@@ -134,17 +134,18 @@ class Field(Board):
         return
 
     def on_click(self, cell):
-        if self.cells_data[cell[0]][cell[1]] == 0 and cursor.selected_tower != 0:
+        if self.cells_data[cell[0]][cell[1]] == 0 and cursor.selected_tower != 0 and cursor.coins >= shop.products[
+                shop.selected][1]:
             towers_list.append(cursor.selected_tower([cell[0] * self.cell_size + 64, cell[
                 1] * self.cell_size + 64], towers_group))
             self.cells_data[cell[0]][cell[1]] = 2
+            cursor.coins -= shop.products[shop.selected][1]
         return
 
 
 class Bullet(pygame.sprite.Sprite):
     # Основной класс простейшей пули.
-    image = pygame.transform.scale(load_image('Simple_bullet.png', -1), (int(width // 60), int(height // 33.75)))
-    image = crop(image, -1)
+    image = load_image('Simple_bullet.png', -1)
 
     def __init__(self, current_position, speed, direction, radius, damage, max_age, *group):
         super().__init__(*group)
@@ -199,8 +200,7 @@ class Bullet(pygame.sprite.Sprite):
 
 
 class PlusBullet(Bullet):
-    image = pygame.transform.scale(load_image('PlusBullet.png', -1), (int(width // 60), int(height // 33.75)))
-    image = crop(image, -1)
+    image = load_image('PlusBullet.png', -1)
 
     def __init__(self, current_position, speed, direction, radius, damage, max_age, *group):
         super().__init__(current_position, speed, direction, radius, damage, max_age, group)
@@ -210,10 +210,8 @@ class PlusBullet(Bullet):
 
 class Cursor(pygame.sprite.Sprite):
     # Стандартный класс курсора.
-    standard_image = pygame.transform.scale(load_image('Standard_cursor.png', -1), (int(width // 60), int(height // 33.75)))
-    invincible_standard_image = pygame.transform.scale(load_image('Standard_cursor_invincible.png', -1), (int(width // 60), int(height // 33.75)))
-    standard_image = crop(standard_image, -1)
-    invincible_standard_image = crop(invincible_standard_image, -1)
+    standard_image = load_image('Standard_cursor.png', -1)
+    invincible_standard_image = load_image('Standard_cursor_invincible.png', -1)
 
     def __init__(self, *group):
         super().__init__(*group)
@@ -228,8 +226,10 @@ class Cursor(pygame.sprite.Sprite):
         # ХП курсора.
         self.invincible = 0
         # Время неуязвимости курсора (в тиках).
-        self.selected_tower = 0
+        self.selected_tower = PlusTower
         # Башня, которую сейчас выбрал курсор.
+        self.coins = 250
+        # Деньги курсора.
         return
 
     def update(self, position):
@@ -266,10 +266,9 @@ class Cursor(pygame.sprite.Sprite):
 
 class Enemy(pygame.sprite.Sprite):
     # Стандартный класс врага.
-    useless_image = pygame.transform.scale(load_image('Blank_image.png', -1), (int(width // 30), int(height // 16.875)))  # Гыыыыы.
-    useless_image = crop(useless_image, -1)
+    useless_image = load_image('Blank_image.png', -1)  # Гыыыыы.
 
-    def __init__(self, speed, hp, *group):
+    def __init__(self, speed, hp, value, *group):
         super().__init__(*group)
         self.image = Enemy.useless_image
         self.rect = self.image.get_rect()
@@ -286,6 +285,8 @@ class Enemy(pygame.sprite.Sprite):
         # ХП врага.
         self.speed = speed / fps
         # Перевод скорости из пикселей в секунду в пиксели в тик.
+        self.value = value
+        # Цена монстра (сколько денег игрок получит при его убийстве).
         return
 
     def update(self):
@@ -313,6 +314,8 @@ class Enemy(pygame.sprite.Sprite):
             self.curr_position = [-1000, -1000]
             self.rect.topleft = (int(self.curr_position[0]), int(self.curr_position[1]))
             # Тут тот же прикол, как и с пулей.
+            cursor.coins += self.value
+            # Игрок получает прибыль!
         return
 
     def fire(self):
@@ -329,11 +332,10 @@ class Enemy(pygame.sprite.Sprite):
 
 class EnemyJack(Enemy):
     # Класс врага-Джека.
-    jack_image = pygame.transform.scale(load_image('Jack.png', -1), (int(width // 30), int(height // 16.875)))
-    jack_image = crop(jack_image, -1)
+    jack_image = load_image('Jack.png', -1)
 
     def __init__(self, *group):
-        super().__init__(50, 1000, *group)
+        super().__init__(50, 1000, 250, *group)
         self.image = EnemyJack.jack_image
         self.frequency = fps
         self.cooldown = fps
@@ -359,8 +361,7 @@ class EnemyJack(Enemy):
 
 class Tower(pygame.sprite.Sprite):
     # Стандартный класс башни.
-    useless_image = pygame.transform.scale(load_image('Tower_sample.png', -1), (int(width // 60), int(height // 33.75)))
-    useless_image = crop(useless_image, -1)
+    useless_image = load_image('Tower_sample.png', -1)
 
     def __init__(self, cooldown, position, *group):
         super().__init__(*group)
@@ -389,8 +390,7 @@ class Tower(pygame.sprite.Sprite):
 
 class PlusTower(Tower):
     # Башня, быстро стреляющая слабыми пулями "плюсиком".
-    tower_image = pygame.transform.scale(load_image('Plus_tower.png', -1), (int(width // 30), int(height // 16.875)))
-    tower_image = crop(tower_image, -1)
+    tower_image = pygame.transform.scale(load_image('Plus_tower.png', -1), (64, 64))
 
     def __init__(self, position, *group):
         super().__init__(0.333, position, *group)
@@ -406,9 +406,45 @@ class PlusTower(Tower):
         return
 
 
-def mainGame():
-    global road, enemy_bullets_list, cursor, enemies_list
-    global towers_list, friendly_bullets_list
+class Shop(Board):
+
+    def __init__(self):
+        super().__init__(10, 2, 64, 64, 896)
+        self.products = [[PlusTower, 50], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+        self.descriptions = ['+', '', '', '', '', '', '', '', '', '']
+        self.selected = 0
+        return
+
+    def on_click(self, cell):
+        self.selected = cell[0]
+        cursor.selected_tower = self.products[self.selected][0]
+        return
+
+    def render(self, surface):
+        for i in range(self.columns):
+            for j in range(self.rows):
+                if self.selected == i:
+                    pygame.draw.rect(surface, (255, 255, 255), (i * self.cell_size + self.indent[
+                        0], j * self.cell_size + self.indent[1], self.cell_size, self.cell_size), 1)
+                else:
+                    pygame.draw.rect(surface, (64, 64, 64), (i * self.cell_size + self.indent[
+                        0], j * self.cell_size + self.indent[1], self.cell_size, self.cell_size), 1)
+                if j == 1 and self.products[i][1] != 0:
+                    cost = smaller_font.render('$' + str(self.products[i][1]), True, (255, 255, 255))
+                    screen.blit(cost, (self.indent[0] + i * self.cell_size + 10, self.indent[
+                        1] + j * self.cell_size + 10))
+                elif j == 0:
+                    cost = smaller_font.render(self.descriptions[i], True, (255, 255, 255))
+                    screen.blit(cost, (self.indent[0] + i * self.cell_size + 10, self.indent[
+                        1] + j * self.cell_size + 10))
+
+
+def game():
+    global road, enemy_bullets_list, enemies_list, towers_list, friendly_bullets_list
+    global font, smaller_font, cursor, shop
+    font = pygame.font.Font('Data/pixelated.ttf', 50)
+    smaller_font = pygame.font.Font('Data/pixelated.ttf', 30)
+    # Шрифт я стырил с https://www.dafont.com/pixelated.font, мне сказали, что можно.
     road = []
     # Путь врага.
     field = Field('level2')
@@ -423,21 +459,23 @@ def mainGame():
     # Тут у нас башни.
     friendly_bullets_list = []
     # Тут - хорошие пули.
+    shop = Shop()
+    # Это магазин.
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                os.startfile('MainMenu.py')
-                sys.exit()
+                running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    os.startfile('MainMenu.py')
-                    sys.exit()
+                    main_menu()
+                    running = False
             elif event.type == pygame.MOUSEMOTION:
                 # Крусор двигается.
                 cursor.update(event.pos)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 field.get_click(event.pos)
+                shop.get_click(event.pos)
         screen.fill((0, 0, 0))
         bullet_iter = 0
         while bullet_iter < len(enemy_bullets_list):
@@ -486,6 +524,11 @@ def mainGame():
         if cursor.invincible:
             cursor.update_invincibility()
             # Обновим неуязвимость курсора, если он неуязвим.
+        hp_hud = font.render('<3   ' + str(cursor.hp), True, (255, 255, 255))
+        screen.blit(hp_hud, (768, 896))
+        coins_hud = font.render('   $      ' + str(cursor.coins), True, (255, 255, 255))
+        screen.blit(coins_hud, (768, 960))
+        shop.render(screen)
         towers_group.draw(screen)
         field.render(screen)
         cursor_group.draw(screen)
@@ -498,4 +541,12 @@ def mainGame():
         # Обновим экран.
         fps_clock.tick(fps)
         # Тик.
-        cursor.selected_tower = PlusTower
+
+
+def main_menu():
+    res_win.main_window()
+    if res_win.Game():
+        game()
+
+
+main_menu()
