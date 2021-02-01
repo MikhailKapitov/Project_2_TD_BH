@@ -271,7 +271,7 @@ class Enemy(pygame.sprite.Sprite):
         self.image = Enemy.useless_image
         self.rect = self.image.get_rect()
         # Установка спрайта.
-        self.curr_position = road[0]
+        self.curr_position = [i for i in road[0]]
         # Начальная позиция врага.
         self.target = 1
         # Номер вершины дороги, к которому должен идти враг.
@@ -294,6 +294,9 @@ class Enemy(pygame.sprite.Sprite):
             dx = road[self.target][0] - self.curr_position[0]
             dy = road[self.target][1] - self.curr_position[1]
             distance_req = (dx * dx + dy * dy) ** 0.5
+            if distance_req == 0:
+                self.target += 1
+                continue
             coefficient = min(distance / distance_req, 1)
             distance -= coefficient * distance_req
             if coefficient == 1:
@@ -333,7 +336,7 @@ class EnemyJack(Enemy):
     jack_image = load_image('Jack.png', -1)
 
     def __init__(self, *group):
-        super().__init__(50, 1000, 250, *group)
+        super().__init__(50, 500, 250, *group)
         self.image = EnemyJack.jack_image
         self.frequency = fps
         self.cooldown = fps
@@ -437,6 +440,27 @@ class Shop(Board):
                         1] + j * self.cell_size + 10))
 
 
+class Spawner:
+
+    def __init__(self, level_name):
+        self.monster_types = [EnemyJack]
+        level_data_file = open('levels\\' + level_name + '_enemies.txt')
+        self.level_enemies_data = [[int(j) for j in i.split(':')] for i in level_data_file.read().split('\n')]
+        for i in self.level_enemies_data:
+            i[0] *= fps
+            # Переводим секунды в тики.
+        level_data_file.close()
+        self.current_index = 0
+        self.current_time = 0
+
+    def update(self):
+        self.current_time += 1
+        if self.current_time == self.level_enemies_data[self.current_index][0]:
+            enemies_list.append(self.monster_types[self.level_enemies_data[self.current_index][1]](enemy_group))
+            self.current_index += 1
+            self.current_time = 0
+
+
 if __name__ == '__main__':
     font = pygame.font.Font('Data/pixelated.ttf', 50)
     smaller_font = pygame.font.Font('Data/pixelated.ttf', 30)
@@ -445,11 +469,13 @@ if __name__ == '__main__':
     # Путь врага.
     field = Field('level2')
     # А это поле.
+    spawner = Spawner('level2')
+    # Эта штука отвечает за появление врагов.
     enemy_bullets_list = []
     # Здесь хранятся все "пули" врагов.
     cursor = Cursor(cursor_group)
     # Здесь - курсор.
-    enemies_list = [EnemyJack(enemy_group)]
+    enemies_list = []
     # А здесь - враги.
     towers_list = []
     # Тут у нас башни.
@@ -516,6 +542,10 @@ if __name__ == '__main__':
         if cursor.invincible:
             cursor.update_invincibility()
             # Обновим неуязвимость курсора, если он неуязвим.
+        if spawner.current_index != len(spawner.level_enemies_data):
+            spawner.update()
+        elif len(enemies_list) == 0:
+            pass  # Тут надо закончить игру и вызвать экран победы.
         hp_hud = font.render('<3   ' + str(cursor.hp), True, (255, 255, 255))
         screen.blit(hp_hud, (768, 896))
         coins_hud = font.render('   $      ' + str(cursor.coins), True, (255, 255, 255))
