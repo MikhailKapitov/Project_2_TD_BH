@@ -34,7 +34,7 @@ def options_window(clock, size):
     run = 1
     imgs[0] = localdefs.imgLoad('optionsimages/Options.png')
     rects[0] = imgs[0].get_rect(centerx=width / 2, centery=height / 5)
-    for num, i in enumerate(["Res1920", "Res1280", "Res1024", 'exit']):
+    for num, i in enumerate(["Res1920", "Res1280", 'exit']):
         imgs[i] = localdefs.imgLoad(os.path.join("optionsimages", i + ".png"))
         rects[i] = imgs[i].get_rect(centerx=width / 2, centery=(num + 1 + 1) * height / 6)
     BackGround = Background('menuimages/pixil.png', [0, 0])
@@ -51,10 +51,6 @@ def options_window(clock, size):
             elif event.type == MOUSEBUTTONUP:
                 if rects["Res1280"].collidepoint(event.dict['pos']):
                     width1, height1 = 1280, 720
-                    chages(size, width1, height1)
-                    run = False
-                elif rects["Res1024"].collidepoint(event.dict['pos']):
-                    width1, height1 = 1024, 768
                     chages(size, width1, height1)
                     run = False
                 elif rects["Res1920"].collidepoint(event.dict['pos']):
