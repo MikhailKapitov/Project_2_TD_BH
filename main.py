@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import pygame
 import os
+import random
+import math
 
 pygame.init()
 size = width, height = 1920, 1080
@@ -21,6 +23,7 @@ friendly_bullets = pygame.sprite.Group()
 # Группа дружелюбных пуль.
 towers_group = pygame.sprite.Group()
 # Группа башен.
+base_group = pygame.sprite.Group()
 pygame.mouse.set_visible(False)
 # Скрываем основной курсор ОС, у нас он круче.
 
@@ -121,7 +124,7 @@ class Field(Board):
     def render(self, surface):
         for i in range(self.columns):
             for j in range(self.rows):
-                if self.cells_data[i][j] == 2 or self.cells_data[i][j] == 0:
+                if self.cells_data[i][j] != 1:
                     pygame.draw.rect(surface, (255, 255, 255), (i * self.cell_size + self.indent[
                         0], j * self.cell_size + self.indent[1], self.cell_size, self.cell_size), 1)
                 if self.cells_data[i][j] == 3:
@@ -134,9 +137,9 @@ class Field(Board):
     def on_click(self, cell):
         if self.cells_data[cell[0]][cell[1]] == 0 and cursor.selected_tower != 0 and cursor.coins >= shop.products[
                 shop.selected][1]:
-            towers_list.append(cursor.selected_tower([cell[0] * self.cell_size + 64, cell[
-                1] * self.cell_size + 64], towers_group))
-            self.cells_data[cell[0]][cell[1]] = 2
+            self.cells_data[cell[0]][cell[1]] = cursor.selected_tower([cell[0] * self.cell_size + 64, cell[
+                1] * self.cell_size + 64], towers_group)
+            towers_list.append(self.cells_data[cell[0]][cell[1]])
             cursor.coins -= shop.products[shop.selected][1]
         return
 
@@ -266,8 +269,13 @@ class Enemy(pygame.sprite.Sprite):
     # Стандартный класс врага.
     useless_image = load_image('Blank_image.png', -1)  # Гыыыыы.
 
-    def __init__(self, speed, hp, value, *group):
+    def __init__(self, speed, hp, value, base_dmg, base_freq, *group):
         super().__init__(*group)
+        self.frost = 1
+        self.base_freq = base_freq * fps
+        # Как обычно.
+        self.base_dmg = base_dmg
+        self.base_timing = 0
         self.image = Enemy.useless_image
         self.rect = self.image.get_rect()
         # Установка спрайта.
@@ -288,29 +296,39 @@ class Enemy(pygame.sprite.Sprite):
         return
 
     def update(self):
-        distance = self.speed
-        while distance >= 0.0000000000001 and self.target < len(road):
-            # Оновляем врага, пока значеия не станут бессмысленными (спасибо погрешностям).
-            dx = road[self.target][0] - self.curr_position[0]
-            dy = road[self.target][1] - self.curr_position[1]
-            distance_req = (dx * dx + dy * dy) ** 0.5
-            if distance_req == 0:
-                self.target += 1
-                continue
-            coefficient = min(distance / distance_req, 1)
-            distance -= coefficient * distance_req
-            if coefficient == 1:
-                self.target += 1
-            self.curr_position[0] += dx * coefficient
-            self.curr_position[1] += dy * coefficient
-            # Умные переходы.
-        self.rect.topleft = (int(self.curr_position[0]), int(self.curr_position[1]))
-        # Все, обновили позицию.
+        if self.target == len(road):
+            self.base_timing += 1
+            if self.base_timing == self.base_freq:
+                cursor.hp = max(cursor.hp - self.base_dmg, 0)
+                if cursor.hp == 0:
+                    # Вызов экрана game-over.
+                    pass
+                self.base_timing = 0
+        else:
+            distance = self.speed * self.frost
+            self.frost = 1
+            while distance >= 0.0000000000001 and self.target < len(road):
+                # Оновляем врага, пока значеия не станут бессмысленными (спасибо погрешностям).
+                dx = road[self.target][0] - self.curr_position[0]
+                dy = road[self.target][1] - self.curr_position[1]
+                distance_req = (dx * dx + dy * dy) ** 0.5
+                if distance_req == 0:
+                    self.target += 1
+                    continue
+                coefficient = min(distance / distance_req, 1)
+                distance -= coefficient * distance_req
+                if coefficient == 1:
+                    self.target += 1
+                self.curr_position[0] += dx * coefficient
+                self.curr_position[1] += dy * coefficient
+                # Умные переходы.
+            self.rect.topleft = (int(self.curr_position[0]), int(self.curr_position[1]))
+            # Все, обновили позицию.
         return
 
-    def attack(self, bullet):
+    def attack(self, damage):
         # Бьем врага.
-        self.hp = max(self.hp - bullet.damage, 0)
+        self.hp = max(self.hp - damage, 0)
         if self.hp == 0:
             self.curr_position = [-1000, -1000]
             self.rect.topleft = (int(self.curr_position[0]), int(self.curr_position[1]))
@@ -330,13 +348,16 @@ class Enemy(pygame.sprite.Sprite):
             self.curr_position[0] + int(64 * part), self.curr_position[1] - 14, int((1 - part) * 64), 5))
         return
 
+    def freeze(self, power):
+        self.frost = power
+
 
 class EnemyJack(Enemy):
     # Класс врага-Джека.
     jack_image = load_image('Jack.png', -1)
 
-    def __init__(self, *group):
-        super().__init__(50, 500, 250, *group)
+    def __init__(self, difficulty, *group):
+        super().__init__(50, 500, 250, 20, 1, *group)
         self.image = EnemyJack.jack_image
         self.frequency = fps
         self.cooldown = fps
@@ -357,6 +378,40 @@ class EnemyJack(Enemy):
         for direction in directions:
             enemy_bullets_list.append(Bullet([self.curr_position[0] + 24, self.curr_position[
                 1] + 24], 100, direction, 8, 20, 2 * fps, enemy_bullets))
+        return
+
+
+class EnemyRandom(Enemy):
+    # Класс врага-кубика.
+    random_image = load_image('Random.png', -1)
+
+    def __init__(self, difficulty, *group):
+        self.difficulty = difficulty
+        super().__init__(random.randint(30, 50 + self.difficulty * 5), random.randint(
+            100, 500 + self.difficulty * 100), random.randint(1, 5 + self.difficulty * 2) * 10, random.randint(
+                1, 10 + self.difficulty * 2) * 5, random.randint(1, 15 - self.difficulty), *group)
+        self.image = EnemyRandom.random_image
+        self.cooldown = fps * random.randint(1, 15 - self.difficulty)
+        # Он будет стрелять рандомно. Совсем.
+
+    def update(self):
+        super().update()
+        self.cooldown -= 1
+        if self.cooldown <= 0:
+            self.fire()
+            # Стреляем, если пора стрелять.
+            self.cooldown = fps * random.randint(1, 5)
+        return
+
+    def fire(self):
+        bullets_amount = random.randint(1, 10 + self.difficulty)
+        for i in range(bullets_amount):
+            damage = random.randint(1, 10 + self.difficulty) * 5
+            enemy_bullets_list.append(Bullet([self.curr_position[0] + 24, self.curr_position[
+                1] + 24], random.randint(50, 100 + self.difficulty * 20), [math.sin(
+                    random.random() * 2 * math.pi), math.cos(
+                        random.random() * 2 * math.pi)], damage // 2, damage, random.randint(
+                            1, 5 + self.difficulty) * fps, enemy_bullets))
         return
 
 
@@ -407,12 +462,62 @@ class PlusTower(Tower):
         return
 
 
+class LaserTower(Tower):
+    # Лазерная башня.
+    tower_image = pygame.transform.scale(load_image('Laser_tower.png', -1), (64, 64))
+
+    def __init__(self, position, *group):
+        super().__init__(-1, position, *group)
+        self.image = LaserTower.tower_image
+        self.range = 65536
+        self.damage = 30
+        return
+
+    def update(self):
+        best = None
+        best_dist = 1e9 + 7
+        for curr_enemy in enemies_list:
+            dx = curr_enemy.curr_position[0] - self.curr_position[0]
+            dy = curr_enemy.curr_position[1] - self.curr_position[1]
+            dist = dx * dx + dy * dy
+            if dist < best_dist:
+                best_dist = dist
+                best = curr_enemy
+        if best_dist <= self.range:
+            best.attack(self.damage / fps)
+            pygame.draw.line(screen, (128, 128, 128), [self.curr_position[0] + 32, self.curr_position[1] + 32], [
+                best.curr_position[0] + 32, best.curr_position[1] + 32], 5)
+        return
+
+
+class FreezingTower(Tower):
+    # Лазерная башня.
+    tower_image = pygame.transform.scale(load_image('Freezing_tower.png', -1), (64, 64))
+
+    def __init__(self, position, *group):
+        super().__init__(-1, position, *group)
+        self.image = FreezingTower.tower_image
+        self.range = 16384
+        self.frost = 0.666
+        return
+
+    def update(self):
+        for curr_enemy in enemies_list:
+            dx = curr_enemy.curr_position[0] - self.curr_position[0]
+            dy = curr_enemy.curr_position[1] - self.curr_position[1]
+            dist = dx * dx + dy * dy
+            if dist <= self.range:
+                curr_enemy.freeze(self.frost)
+        return
+
+
 class Shop(Board):
 
     def __init__(self):
         super().__init__(10, 2, 64, 64, 896)
-        self.products = [[PlusTower, 50], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-        self.descriptions = ['+', '', '', '', '', '', '', '', '', '']
+        self.products = [[PlusTower, 50], [LaserTower, 100], [FreezingTower, 100], [
+            0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+        self.descriptions = ['+', '-', '*', '', '', '', '', '', '', '']
         self.selected = 0
         return
 
@@ -432,7 +537,7 @@ class Shop(Board):
                         0], j * self.cell_size + self.indent[1], self.cell_size, self.cell_size), 1)
                 if j == 1 and self.products[i][1] != 0:
                     cost = smaller_font.render('$' + str(self.products[i][1]), True, (255, 255, 255))
-                    screen.blit(cost, (self.indent[0] + i * self.cell_size + 10, self.indent[
+                    screen.blit(cost, (self.indent[0] + i * self.cell_size + 5, self.indent[
                         1] + j * self.cell_size + 10))
                 elif j == 0:
                     cost = smaller_font.render(self.descriptions[i], True, (255, 255, 255))
@@ -443,7 +548,7 @@ class Shop(Board):
 class Spawner:
 
     def __init__(self, level_name):
-        self.monster_types = [EnemyJack]
+        self.monster_types = [EnemyJack, EnemyRandom]
         level_data_file = open('levels\\' + level_name + '_enemies.txt')
         self.level_enemies_data = [[int(j) for j in i.split(':')] for i in level_data_file.read().split('\n')]
         for i in self.level_enemies_data:
@@ -456,7 +561,8 @@ class Spawner:
     def update(self):
         self.current_time += 1
         if self.current_time == self.level_enemies_data[self.current_index][0]:
-            enemies_list.append(self.monster_types[self.level_enemies_data[self.current_index][1]](enemy_group))
+            enemies_list.append(self.monster_types[self.level_enemies_data[self.current_index][1]](
+                self.level_enemies_data[self.current_index][2], enemy_group))
             self.current_index += 1
             self.current_time = 0
 
@@ -483,6 +589,11 @@ if __name__ == '__main__':
     # Тут - хорошие пули.
     shop = Shop()
     # Это магазин.
+    base = pygame.sprite.Sprite()
+    base.image = load_image('Base.png', -1)
+    base.rect = base.image.get_rect()
+    base.rect.topleft = [road[-1][0] + 64, road[-1][1]]
+    base_group.add(base)
     running = True
     while running:
         for event in pygame.event.get():
@@ -528,7 +639,7 @@ if __name__ == '__main__':
                 attacked = False
                 for enemy in enemies_list:
                     if pygame.sprite.collide_mask(current_bullet, enemy):
-                        enemy.attack(current_bullet)
+                        enemy.attack(current_bullet.damage)
                         current_bullet.current_position = [-1000, -1000]
                         current_bullet.rect.topleft = (int(
                             current_bullet.current_position[0]), int(current_bullet.current_position[1]))
@@ -537,8 +648,6 @@ if __name__ == '__main__':
                         break
                 if not attacked:
                     bullet_iter += 1
-        for current_tower in towers_list:
-            current_tower.update()
         if cursor.invincible:
             cursor.update_invincibility()
             # Обновим неуязвимость курсора, если он неуязвим.
@@ -553,12 +662,15 @@ if __name__ == '__main__':
         shop.render(screen)
         towers_group.draw(screen)
         field.render(screen)
+        for current_tower in towers_list:
+            current_tower.update()
         cursor_group.draw(screen)
         enemy_group.draw(screen)
         friendly_bullets.draw(screen)
         for current_enemy in enemies_list:
             current_enemy.show_hp(screen)
         enemy_bullets.draw(screen)
+        base_group.draw(screen)
         pygame.display.flip()
         # Обновим экран.
         fps_clock.tick(fps)
