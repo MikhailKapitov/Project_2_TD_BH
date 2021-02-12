@@ -105,6 +105,7 @@ class Field(Board):
 
     def __init__(self, level_name):
         super().__init__(28, 12, 64, 64, 64)
+        self.selected = [-1, -1]
         level_map_file = open('levels\\' + level_name + '_map.txt')
         level_map_data = level_map_file.read().split('\n')
         level_map_file.close()
@@ -132,6 +133,9 @@ class Field(Board):
                         0], j * self.cell_size + self.indent[1], self.cell_size, self.cell_size))
                     pygame.draw.rect(surface, (128, 128, 128), (i * self.cell_size + self.indent[
                         0], j * self.cell_size + self.indent[1], self.cell_size, self.cell_size), 1)
+                if i == self.selected[0] and self.selected[1] == j:
+                    pygame.draw.rect(surface, (255, 255, 255), (i * self.cell_size + self.indent[
+                        0], j * self.cell_size + self.indent[1], self.cell_size, self.cell_size), 8)
         return
 
     def on_click(self, cell):
@@ -141,6 +145,9 @@ class Field(Board):
                 1] * self.cell_size + 64], towers_group)
             towers_list.append(self.cells_data[cell[0]][cell[1]])
             cursor.coins -= shop.products[shop.selected][1]
+        elif self.cells_data[cell[0]][cell[1]] != 1 and self.cells_data[cell[0]][cell[1]] != 0 and self.cells_data[
+                cell[0]][cell[1]] != 3:
+            self.selected = cell
         return
 
 
@@ -229,7 +236,7 @@ class Cursor(pygame.sprite.Sprite):
         # Время неуязвимости курсора (в тиках).
         self.selected_tower = PlusTower
         # Башня, которую сейчас выбрал курсор.
-        self.coins = 250
+        self.coins = 1000
         # Деньги курсора.
         return
 
@@ -349,7 +356,7 @@ class Enemy(pygame.sprite.Sprite):
         return
 
     def freeze(self, power):
-        self.frost = power
+        self.frost = min(power, self.frost)
 
 
 class EnemyJack(Enemy):
@@ -415,12 +422,46 @@ class EnemyRandom(Enemy):
         return
 
 
+class TowerManager:
+
+    def __init__(self, pos_x, pos_y, siz_x, siz_y):
+        self.pos = [pos_x, pos_y]
+        self.siz = [siz_x, siz_y]
+        self.mid = siz_y // 2 + pos_y
+        self.delete = smaller_font.render('DELETE', True, (255, 255, 255))
+        return
+
+    def render(self):
+        if field.selected[0] != -1:
+            pygame.draw.rect(screen, (255, 255, 255), [self.pos[0], self.pos[1], self.siz[0], self.siz[1]], 2)
+            cost = smaller_font.render(field.cells_data[field.selected[0]][field.selected[1]].cost, True, (
+                255, 255, 255))
+            screen.blit(cost, (self.pos[0] + 10, self.pos[1] + 10))
+            pygame.draw.line(screen, (255, 255, 255), [self.pos[0], self.mid], [self.pos[0] + self.siz[0], self.mid], 2)
+            screen.blit(self.delete, (self.pos[0] + 10, self.mid + 10))
+        return
+
+    def get_click(self, pos):
+        if self.pos[0] <= pos[0] <= self.pos[0] + self.siz[0] and self.pos[1] <= pos[1] <= self.pos[1] + self.siz[
+                1] and field.selected[0] != -1:
+            if pos[1] >= self.mid:
+                field.cells_data[field.selected[0]][field.selected[1]].rect = [-1000, -1000]
+                field.cells_data[field.selected[0]][field.selected[1]].curr_position = [-1000, -1000]
+                field.cells_data[field.selected[0]][field.selected[1]] = 0
+                field.selected = [-1, -1]
+            else:
+                field.cells_data[field.selected[0]][field.selected[1]].upgrade()
+        return
+
+
 class Tower(pygame.sprite.Sprite):
     # Стандартный класс башни.
     useless_image = load_image('Tower_sample.png', -1)
 
     def __init__(self, cooldown, position, *group):
         super().__init__(*group)
+        self.stage = 0
+        self.cost = 'MAXED OUT'
         self.image = Tower.useless_image
         self.rect = self.image.get_rect()
         # Установка спрайта.
@@ -443,62 +484,102 @@ class Tower(pygame.sprite.Sprite):
         # Башня стреляет!
         return
 
+    def upgrade(self):
+        if self.cost[0] == 'M' or cursor.coins < int(self.cost[2:]):
+            return False
+        cursor.coins -= int(self.cost[2:])
+        self.cost = 'MAXED OUT'
+        self.stage += 1
+        return True
+
 
 class PlusTower(Tower):
     # Башня, быстро стреляющая слабыми пулями "плюсиком".
     tower_image = pygame.transform.scale(load_image('Plus_tower.png', -1), (64, 64))
+    tower_image_ultra = pygame.transform.scale(load_image('Plus_tower_ultra.png', -1), (64, 64))
 
     def __init__(self, position, *group):
         super().__init__(0.333, position, *group)
         self.image = PlusTower.tower_image
+        self.cost = '$ 100'
         return
 
     def fire(self):
-        directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]
+        if self.stage == 0:
+            directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]
+        else:
+            directions = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [-1, -1], [1, -1]]
         for direction in directions:
             friendly_bullets_list.append(PlusBullet([self.curr_position[
                 0] + 22, self.curr_position[
                     1] + 22], 100, direction, 10, 10, fps, friendly_bullets))
         return
 
+    def upgrade(self):
+        if super().upgrade():
+            self.image = PlusTower.tower_image_ultra
+        return
+
 
 class LaserTower(Tower):
     # Лазерная башня.
     tower_image = pygame.transform.scale(load_image('Laser_tower.png', -1), (64, 64))
+    tower_image_ultra = pygame.transform.scale(load_image('Laser_tower_ultra.png', -1), (64, 64))
 
     def __init__(self, position, *group):
         super().__init__(-1, position, *group)
         self.image = LaserTower.tower_image
         self.range = 65536
         self.damage = 30
+        self.cost = '$ 200'
+        self.target = None
         return
 
     def update(self):
-        best = None
-        best_dist = 1e9 + 7
-        for curr_enemy in enemies_list:
-            dx = curr_enemy.curr_position[0] - self.curr_position[0]
-            dy = curr_enemy.curr_position[1] - self.curr_position[1]
+        if self.target is not None:
+            dx = self.target.curr_position[0] - self.curr_position[0]
+            dy = self.target.curr_position[1] - self.curr_position[1]
             dist = dx * dx + dy * dy
-            if dist < best_dist:
-                best_dist = dist
-                best = curr_enemy
-        if best_dist <= self.range:
-            best.attack(self.damage / fps)
-            pygame.draw.line(screen, (128, 128, 128), [self.curr_position[0] + 32, self.curr_position[1] + 32], [
-                best.curr_position[0] + 32, best.curr_position[1] + 32], 5)
+        if self.target is None or dist > self.range:
+            best = None
+            best_dist = self.range + 1
+            for curr_enemy in enemies_list:
+                dx = curr_enemy.curr_position[0] - self.curr_position[0]
+                dy = curr_enemy.curr_position[1] - self.curr_position[1]
+                dist = dx * dx + dy * dy
+                if dist < best_dist:
+                    best_dist = dist
+                    best = curr_enemy
+            self.target = best
+        if self.target is not None:
+            if self.stage == 0:
+                self.target.attack(self.damage / fps)
+                pygame.draw.line(screen, (128, 128, 128), [self.curr_position[0] + 32, self.curr_position[1] + 32], [
+                    self.target.curr_position[0] + 32, self.target.curr_position[1] + 32], 5)
+            else:
+                self.target.freeze(0)
+                pygame.draw.line(screen, (64, 64, 64), [self.curr_position[0] + 32, self.curr_position[1] + 32], [
+                    self.target.curr_position[0] + 32, self.target.curr_position[1] + 32], 5)
+        return
+
+    def upgrade(self):
+        if super().upgrade():
+            self.image = LaserTower.tower_image_ultra
         return
 
 
 class FreezingTower(Tower):
     # Лазерная башня.
     tower_image = pygame.transform.scale(load_image('Freezing_tower.png', -1), (64, 64))
+    tower_image_ultra = pygame.transform.scale(load_image('Freezing_tower_ultra.png', -1), (64, 64))
 
     def __init__(self, position, *group):
         super().__init__(-1, position, *group)
         self.image = FreezingTower.tower_image
         self.range = 16384
         self.frost = 0.666
+        self.damage = 10
+        self.cost = '$ 200'
         return
 
     def update(self):
@@ -508,6 +589,13 @@ class FreezingTower(Tower):
             dist = dx * dx + dy * dy
             if dist <= self.range:
                 curr_enemy.freeze(self.frost)
+                if self.stage == 1:
+                    curr_enemy.attack(self.damage / fps)
+        return
+
+    def upgrade(self):
+        if super().upgrade():
+            self.image = FreezingTower.tower_image_ultra
         return
 
 
@@ -594,6 +682,7 @@ if __name__ == '__main__':
     base.rect = base.image.get_rect()
     base.rect.topleft = [road[-1][0] + 64, road[-1][1]]
     base_group.add(base)
+    manager = TowerManager(1600, 896, 256, 128)
     running = True
     while running:
         for event in pygame.event.get():
@@ -605,6 +694,7 @@ if __name__ == '__main__':
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 field.get_click(event.pos)
                 shop.get_click(event.pos)
+                manager.get_click(event.pos)
         screen.fill((0, 0, 0))
         bullet_iter = 0
         while bullet_iter < len(enemy_bullets_list):
@@ -660,10 +750,17 @@ if __name__ == '__main__':
         coins_hud = font.render('   $      ' + str(cursor.coins), True, (255, 255, 255))
         screen.blit(coins_hud, (768, 960))
         shop.render(screen)
+        manager.render()
         towers_group.draw(screen)
         field.render(screen)
-        for current_tower in towers_list:
-            current_tower.update()
+        tower_iter = 0
+        while tower_iter < len(towers_list):
+            current_tower = towers_list[tower_iter]
+            if current_tower.curr_position[0] == -1000:
+                del towers_list[tower_iter]
+            else:
+                current_tower.update()
+                tower_iter += 1
         cursor_group.draw(screen)
         enemy_group.draw(screen)
         friendly_bullets.draw(screen)
