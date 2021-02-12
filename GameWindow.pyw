@@ -432,7 +432,7 @@ class PlusTower(Tower):
 class Shop(Board):
 
     def __init__(self):
-        super().__init__(10, 2, 64, 64, 896)
+        super().__init__(10, 2, int(width // 30), 64, int(height - int(width //30) * 2.875))
         self.products = [[PlusTower, 50], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
         self.descriptions = ['+', '', '', '', '', '', '', '', '', '']
         self.selected = 0
@@ -575,9 +575,9 @@ def game(level):
         elif len(enemies_list) == 0:
             pass  # Тут надо закончить игру и вызвать экран победы.
         hp_hud = font.render('<3   ' + str(cursor.hp), True, (255, 255, 255))
-        screen.blit(hp_hud, (768, 896))
+        screen.blit(hp_hud, (int(height * 0.711111), int(height - int(width // 30) * 2.875)))
         coins_hud = font.render('   $      ' + str(cursor.coins), True, (255, 255, 255))
-        screen.blit(coins_hud, (768, 960))
+        screen.blit(coins_hud, (int(height * 0.711111), int(height - int(width // 30) * 1.875)))
         shop.render(screen)
         towers_group.draw(screen)
         field.render(screen)
