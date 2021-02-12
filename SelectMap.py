@@ -1,14 +1,10 @@
-# -*- coding: utf-8 -*-
 import pygame
 import localdefs
 import os
-import sys
 
 f = open('resolution.txt', 'r')
 pygame.init()
 size = width, height = [int(a) for a in f.read().split('x')]
-flag1 = False
-flag2 = False
 
 pygame.init()
 # Пока что игра будет автоматически запускаться в full-screen. Потом, возможно, стоит добавить настройку
@@ -29,15 +25,15 @@ class Background(pygame.sprite.Sprite):
         self.rect.left, self.rect.top = location
 
 
-def main_window():
-    global flag1, flag2
-    flag1 = False
-    flag2 = False
-    running = True
+def level_window():
+    global level, flag
+    level = "level_2"
+    run = True
+    flag = True
     imgs = {}
     rects = {}
     bg = pygame.Surface(size)
-    while running:
+    while run:
         pygame.mouse.set_visible(True)
         f = open('resolution.txt', 'r')
         pygame.init()
@@ -47,38 +43,48 @@ def main_window():
         bg.fill([255, 255, 255])
         bg.blit(pygame.transform.scale(BackGround.image, (width1, height1)), BackGround.rect)
         screen.blit(bg, (0, 0))
-        for num, i in enumerate(["playmap", "options", "exit"]):
-            imgs[i] = localdefs.imgLoad(os.path.join("menuimages", i + ".png"))
-            rects[i] = imgs[i].get_rect(centerx=size1[0] / 2, centery=(num + 1) * size1[1] / 5)
+        for num, i in enumerate(["lvl_1", "lvl_2", "lvl_3", "lvl_4", "lvl_5", "exit"]):
+            imgs[i] = localdefs.imgLoad(os.path.join("levels", i + ".png"))
+            rects[i] = imgs[i].get_rect(centerx=size1[0] / 2, centery=(num + 1) * size1[1] / 7)
         for key in imgs.keys():
             screen.blit(imgs[key], rects[key])
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                flag1 = False
-                flag2 = False
-                running = False
+                run = False
             elif event.type == pygame.MOUSEBUTTONUP:
-                if rects["playmap"].collidepoint(event.dict['pos']):
-                    flag1 = True
-                    levels()
-                    running = False
-                elif rects["options"].collidepoint(event.dict['pos']):
-                    flag2 = True
-                    Options()
-                    running = False
+                if rects["lvl_1"].collidepoint(event.dict['pos']):
+                    level = "level1"
+                    run = False
+                    Game_level()
+                elif rects["lvl_2"].collidepoint(event.dict['pos']):
+                    level = "level2"
+                    run = False
+                    Game_level()
+                elif rects["lvl_3"].collidepoint(event.dict['pos']):
+                    level = "level3"
+                    run = False
+                    Game_level()
+                elif rects["lvl_4"].collidepoint(event.dict['pos']):
+                    level = "level4"
+                    run = False
+                    Game_level()
+                elif rects["lvl_5"].collidepoint(event.dict['pos']):
+                    level = "level5"
+                    run = False
+                    Game_level()
                 elif rects["exit"].collidepoint(event.dict['pos']):
-                    flag1 = False
-                    flag2 = False
-                    sys.exit()
+                    flag = False
+                    running()
+                    run = False
         pygame.display.flip()
         # Обновим экран.
         fps_clock.tick(fps)
         # Тик.
 
 
-def levels():
-    return flag1
+def Game_level():
+    return level
 
 
-def Options():
-    return flag2
+def running():
+    return flag

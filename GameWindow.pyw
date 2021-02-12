@@ -4,8 +4,17 @@ import os
 import sys
 import res_win
 
+# -*- coding: utf-8 -*-
+import pygame
+import os
+import OptionsWindow
+import SelectMap
+
+clock = pygame.time.Clock()
 pygame.init()
-size = width, height = 1920, 1080
+f = open('resolution.txt', 'r')
+pygame.init()
+size = width, height = [int(a) for a in f.read().split('x')]
 # Пока что игра будет автоматически запускаться в full-screen. А дальше это проблемы Ивана. :)))
 fps = 144
 # Вообще было бы логично юзать 60, но у моего монитора 144 герц, гы.
@@ -103,7 +112,7 @@ def search_for_road(pos, pr, board):
 class Field(Board):
 
     def __init__(self, level_name):
-        super().__init__(28, 12, 64, 64, 64)
+        super().__init__(28, 12, int(width // 30), 64, 64)
         level_map_file = open('levels\\' + level_name + '_map.txt')
         level_map_data = level_map_file.read().split('\n')
         level_map_file.close()
@@ -145,7 +154,8 @@ class Field(Board):
 
 class Bullet(pygame.sprite.Sprite):
     # Основной класс простейшей пули.
-    image = load_image('Simple_bullet.png', -1)
+    image = pygame.transform.scale(load_image('Simple_bullet.png', -1), (int(width // 60), int(height // 33.75)))
+    image = crop(image, -1)
 
     def __init__(self, current_position, speed, direction, radius, damage, max_age, *group):
         super().__init__(*group)
@@ -200,7 +210,8 @@ class Bullet(pygame.sprite.Sprite):
 
 
 class PlusBullet(Bullet):
-    image = load_image('PlusBullet.png', -1)
+    image = pygame.transform.scale(load_image('PlusBullet.png', -1), (int(width // 60), int(height // 33.75)))
+    image = crop(image, -1)
 
     def __init__(self, current_position, speed, direction, radius, damage, max_age, *group):
         super().__init__(current_position, speed, direction, radius, damage, max_age, group)
@@ -210,8 +221,12 @@ class PlusBullet(Bullet):
 
 class Cursor(pygame.sprite.Sprite):
     # Стандартный класс курсора.
-    standard_image = load_image('Standard_cursor.png', -1)
-    invincible_standard_image = load_image('Standard_cursor_invincible.png', -1)
+    standard_image = pygame.transform.scale(load_image('Standard_cursor.png', -1),
+                                            (int(width // 60), int(height // 33.75)))
+    invincible_standard_image = pygame.transform.scale(load_image('Standard_cursor_invincible.png', -1),
+                                                       (int(width // 60), int(height // 33.75)))
+    standard_image = crop(standard_image, -1)
+    invincible_standard_image = crop(invincible_standard_image, -1)
 
     def __init__(self, *group):
         super().__init__(*group)
@@ -266,14 +281,16 @@ class Cursor(pygame.sprite.Sprite):
 
 class Enemy(pygame.sprite.Sprite):
     # Стандартный класс врага.
-    useless_image = load_image('Blank_image.png', -1)  # Гыыыыы.
+    useless_image = pygame.transform.scale(load_image('Blank_image.png', -1),
+                                           (int(width // 30), int(height // 16.875)))  # Гыыыыы.
+    useless_image = crop(useless_image, -1)
 
     def __init__(self, speed, hp, value, *group):
         super().__init__(*group)
         self.image = Enemy.useless_image
         self.rect = self.image.get_rect()
         # Установка спрайта.
-        self.curr_position = road[0]
+        self.curr_position = [i for i in road[0]]
         # Начальная позиция врага.
         self.target = 1
         # Номер вершины дороги, к которому должен идти враг.
@@ -296,6 +313,9 @@ class Enemy(pygame.sprite.Sprite):
             dx = road[self.target][0] - self.curr_position[0]
             dy = road[self.target][1] - self.curr_position[1]
             distance_req = (dx * dx + dy * dy) ** 0.5
+            if distance_req == 0:
+                self.target += 1
+                continue
             coefficient = min(distance / distance_req, 1)
             distance -= coefficient * distance_req
             if coefficient == 1:
@@ -332,10 +352,11 @@ class Enemy(pygame.sprite.Sprite):
 
 class EnemyJack(Enemy):
     # Класс врага-Джека.
-    jack_image = load_image('Jack.png', -1)
+    jack_image = pygame.transform.scale(load_image('Jack.png', -1), (int(width // 30), int(height // 16.875)))
+    jack_image = crop(jack_image, -1)
 
     def __init__(self, *group):
-        super().__init__(50, 1000, 250, *group)
+        super().__init__(50, 500, 250, *group)
         self.image = EnemyJack.jack_image
         self.frequency = fps
         self.cooldown = fps
@@ -361,7 +382,8 @@ class EnemyJack(Enemy):
 
 class Tower(pygame.sprite.Sprite):
     # Стандартный класс башни.
-    useless_image = load_image('Tower_sample.png', -1)
+    useless_image = pygame.transform.scale(load_image('Tower_sample.png', -1), (int(width // 60), int(height // 33.75)))
+    useless_image = crop(useless_image, -1)
 
     def __init__(self, cooldown, position, *group):
         super().__init__(*group)
@@ -390,7 +412,8 @@ class Tower(pygame.sprite.Sprite):
 
 class PlusTower(Tower):
     # Башня, быстро стреляющая слабыми пулями "плюсиком".
-    tower_image = pygame.transform.scale(load_image('Plus_tower.png', -1), (64, 64))
+    tower_image = pygame.transform.scale(load_image('Plus_tower.png', -1), (int(width // 30), int(height // 16.875)))
+    tower_image = crop(tower_image, -1)
 
     def __init__(self, position, *group):
         super().__init__(0.333, position, *group)
@@ -409,7 +432,7 @@ class PlusTower(Tower):
 class Shop(Board):
 
     def __init__(self):
-        super().__init__(10, 2, 64, 64, 896)
+        super().__init__(10, 2, int(width // 30), 64, int(height - int(width //30) * 2.875))
         self.products = [[PlusTower, 50], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
         self.descriptions = ['+', '', '', '', '', '', '', '', '', '']
         self.selected = 0
@@ -439,7 +462,28 @@ class Shop(Board):
                         1] + j * self.cell_size + 10))
 
 
-def game():
+class Spawner:
+
+    def __init__(self, level_name):
+        self.monster_types = [EnemyJack]
+        level_data_file = open('levels\\' + level_name + '_enemies.txt')
+        self.level_enemies_data = [[int(j) for j in i.split(':')] for i in level_data_file.read().split('\n')]
+        for i in self.level_enemies_data:
+            i[0] *= fps
+            # Переводим секунды в тики.
+        level_data_file.close()
+        self.current_index = 0
+        self.current_time = 0
+
+    def update(self):
+        self.current_time += 1
+        if self.current_time == self.level_enemies_data[self.current_index][0]:
+            enemies_list.append(self.monster_types[self.level_enemies_data[self.current_index][1]](enemy_group))
+            self.current_index += 1
+            self.current_time = 0
+
+
+def game(level):
     global road, enemy_bullets_list, enemies_list, towers_list, friendly_bullets_list
     global font, smaller_font, cursor, shop
     font = pygame.font.Font('Data/pixelated.ttf', 50)
@@ -447,13 +491,15 @@ def game():
     # Шрифт я стырил с https://www.dafont.com/pixelated.font, мне сказали, что можно.
     road = []
     # Путь врага.
-    field = Field('level2')
+    field = Field(level)
     # А это поле.
+    spawner = Spawner(level)
+    # Эта штука отвечает за появление врагов.
     enemy_bullets_list = []
     # Здесь хранятся все "пули" врагов.
     cursor = Cursor(cursor_group)
     # Здесь - курсор.
-    enemies_list = [EnemyJack(enemy_group)]
+    enemies_list = []
     # А здесь - враги.
     towers_list = []
     # Тут у нас башни.
@@ -524,10 +570,14 @@ def game():
         if cursor.invincible:
             cursor.update_invincibility()
             # Обновим неуязвимость курсора, если он неуязвим.
+        if spawner.current_index != len(spawner.level_enemies_data):
+            spawner.update()
+        elif len(enemies_list) == 0:
+            pass  # Тут надо закончить игру и вызвать экран победы.
         hp_hud = font.render('<3   ' + str(cursor.hp), True, (255, 255, 255))
-        screen.blit(hp_hud, (768, 896))
+        screen.blit(hp_hud, (int(height * 0.711111), int(height - int(width // 30) * 2.875)))
         coins_hud = font.render('   $      ' + str(cursor.coins), True, (255, 255, 255))
-        screen.blit(coins_hud, (768, 960))
+        screen.blit(coins_hud, (int(height * 0.711111), int(height - int(width // 30) * 1.875)))
         shop.render(screen)
         towers_group.draw(screen)
         field.render(screen)
@@ -544,9 +594,41 @@ def game():
 
 
 def main_menu():
+    background = pygame.Surface(size)
     res_win.main_window()
-    if res_win.Game():
-        game()
+    if res_win.levels():
+        SelectMap.level_window()
+        lvl = SelectMap.Game_level()
+        if SelectMap.running():
+            pass
+        else:
+            main_menu()
+        for item in towers_group:
+            item.kill()
+            towers_group.clear(screen, background)
+            towers_group.draw(screen)
+        for item in cursor_group:
+            item.kill()
+            cursor_group.clear(screen, background)
+            cursor_group.draw(screen)
+        for item in enemy_group:
+            item.kill()
+            enemy_group.clear(screen, background)
+            enemy_group.draw(screen)
+        for item in friendly_bullets:
+            item.kill()
+            friendly_bullets.clear(screen, background)
+            friendly_bullets.draw(screen)
+        for item in enemy_bullets:
+            item.kill()
+            enemy_bullets.clear(screen, background)
+            enemy_bullets.draw(screen)
+        pygame.mouse.set_visible(False)
+        game(lvl)
+    elif res_win.Options():
+        OptionsWindow.options_window(pygame.time.Clock(), size)
+        if not OptionsWindow.running():
+            main_menu()
 
 
 main_menu()

@@ -49,7 +49,7 @@ def main(size):
         for num, i in enumerate(["playmap", "edittowers", "options", "exit"]):
             imgs[i] = localdefs.imgLoad(os.path.join("menuimages", i + ".png"))
             rects[i] = imgs[i].get_rect(centerx=size[0] / 2, centery=(num + 1) * size[1] / 5)
-        BackGround = Background('menuimages/background_image.png', [0, 0])
+        BackGround = Background('menuimages/background_image_2.jpg', [0, 0])
         bg.fill([255, 255, 255])
         bg.blit(pygame.transform.scale(BackGround.image, (width, height)), BackGround.rect)
         screen.blit(bg, (0, 0))
