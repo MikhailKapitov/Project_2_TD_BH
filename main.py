@@ -145,9 +145,13 @@ class Field(Board):
                 1] * self.cell_size + 64], towers_group)
             towers_list.append(self.cells_data[cell[0]][cell[1]])
             cursor.coins -= shop.products[shop.selected][1]
+            self.selected = cell
         elif self.cells_data[cell[0]][cell[1]] != 1 and self.cells_data[cell[0]][cell[1]] != 0 and self.cells_data[
                 cell[0]][cell[1]] != 3:
-            self.selected = cell
+            if self.selected == cell:
+                self.selected = [-1, -1]
+            else:
+                self.selected = cell
         return
 
 
