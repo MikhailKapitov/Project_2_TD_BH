@@ -619,12 +619,12 @@ class LaserTower(Tower):
                     best = curr_enemy
             self.target = best
         # Короче, тут мы ищем цель. Башня пытается либо продолжить стрелять во врага, либо переключиться на ближайшего.
-        if self.target is not None and self.target.curr_position[0] > 0:
+        if self.target is not None:
             if self.stage == 0:
                 # Белый лазер - обычная башня наносит урон.
-                self.target.attack(self.damage / fps)
                 pygame.draw.line(screen, (128, 128, 128), [self.curr_position[0] + 32, self.curr_position[1] + 32], [
                     self.target.curr_position[0] + 32, self.target.curr_position[1] + 32], 5)
+                self.target.attack(self.damage / fps)
             else:
                 # Серый лазер - прокаченная башня останавливает врага.
                 self.target.freeze(0)
