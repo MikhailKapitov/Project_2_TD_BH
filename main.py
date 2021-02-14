@@ -446,10 +446,10 @@ class EnemyRandom(Enemy):
         self.difficulty = difficulty
         super().__init__(random.randint(30, 50 + self.difficulty * 5), random.randint(
             100, 500 + self.difficulty * 400), random.randint(1, 5 + self.difficulty * 2) * 10, random.randint(
-                1, 10 + self.difficulty * 2) * 5, random.randint(1, max(15 - self.difficulty, 5)), *group)
+                1, 10 + self.difficulty * 2) * 5, random.randint(1, max(15 - self.difficulty, 3)), *group)
         # Рандомим характеристики согласно "сложности".
         self.image = EnemyRandom.random_image
-        self.cooldown = fps * random.randint(1, 15 - self.difficulty)
+        self.cooldown = fps * random.randint(1, max(3, 15 - random.randint(0, self.difficulty)))
         # Он будет стрелять рандомно. Совсем.
 
     def update(self):
@@ -458,7 +458,7 @@ class EnemyRandom(Enemy):
         if self.cooldown <= 0:
             self.fire()
             # Стреляем, если пора стрелять.
-            self.cooldown = fps * random.randint(1, 5)
+            self.cooldown = fps * random.randint(1, max(3, 15 - random.randint(0, self.difficulty)))
         return
 
     def fire(self):
@@ -619,7 +619,7 @@ class LaserTower(Tower):
                     best = curr_enemy
             self.target = best
         # Короче, тут мы ищем цель. Башня пытается либо продолжить стрелять во врага, либо переключиться на ближайшего.
-        if self.target is not None and self.target.hp != 0:
+        if self.target is not None and self.target.curr_position[0] > 0:
             if self.stage == 0:
                 # Белый лазер - обычная башня наносит урон.
                 self.target.attack(self.damage / fps)
