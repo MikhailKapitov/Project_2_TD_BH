@@ -594,7 +594,7 @@ class LaserTower(Tower):
         super().__init__(-1, position, *group)
         self.image = LaserTower.tower_image
         self.range = 65536
-        self.damage = 30
+        self.damage = 60
         self.cost = '$ 200'
         self.target = None
         return
@@ -694,7 +694,6 @@ class HomingTower(Tower):
         if len(enemies_list) >= 2 and self.stage == 1:
             targets = random.sample(enemies_list, 2)
             # Если есть хотя бы два врага и башня прокачана - берем рандомные цели.
-            print(2)
         elif len(enemies_list) >= 1:
             targets = random.sample(enemies_list, 1)
             # Если нет, но есть хотя бы один враг - берем рандомную цель.
