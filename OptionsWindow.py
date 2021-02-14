@@ -3,13 +3,13 @@ from pygame.locals import *
 import localdefs
 import os
 import sys
-import subprocess
 
 clock = pygame.time.Clock()
 pygame.init()
 f = open('resolution.txt', 'r')
 pygame.init()
 size = width, height = [int(a) for a in f.read().split('x')]
+
 screen = pygame.display.set_mode(size)
 
 
