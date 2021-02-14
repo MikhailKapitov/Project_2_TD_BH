@@ -7,10 +7,9 @@ pygame.init()
 size = width, height = [int(a) for a in f.read().split('x')]
 
 pygame.init()
-# Пока что игра будет автоматически запускаться в full-screen. Потом, возможно, стоит добавить настройку
-# разрешения.
+
 fps = 144
-# Вообще было бы логично юзать 60, но у моего монитора 144 герц, гы.
+
 fps_clock = pygame.time.Clock()
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Tower Defense Bullet Hell')

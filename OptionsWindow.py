@@ -26,12 +26,10 @@ def options_window(clock, size):
     flag = True
     width, height = size
     pygame.mouse.set_visible(True)
-    run = 1
     imgs = dict()
     rects = dict()
     screen = pygame.display.set_mode((width, height))
     bg = pygame.Surface((width, height))
-    run = 1
     imgs[0] = localdefs.imgLoad('optionsimages/Options.png')
     rects[0] = imgs[0].get_rect(centerx=width / 2, centery=height / 5)
     for num, i in enumerate(["Res1920", "Res1280", 'exit']):
@@ -42,6 +40,7 @@ def options_window(clock, size):
     bg.blit(pygame.transform.scale(BackGround.image, (width, height)), BackGround.rect)
     clock.tick(40)
     screen.blit(bg, (0, 0))
+    run = True
     while run:
         for key in imgs.keys():
             screen.blit(imgs[key], rects[key])
