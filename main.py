@@ -245,7 +245,7 @@ class HomingBullet(Bullet):
         direction = [self.target.curr_position[0] - current_position[0], self.target.curr_position[
             0] - current_position[0]]
         # Наводимся на цель.
-        super().__init__(current_position, 256, direction, 64, 64, 1e9 + 7, group)
+        super().__init__(current_position, 512, direction, 64, 512, 1e9 + 7, group)
         self.image = crop(pygame.transform.scale(HomingBullet.image, (
             self.radius + self.radius, self.radius + self.radius)), -1)
         self.mask = pygame.mask.from_surface(self.image)
@@ -282,7 +282,7 @@ class Cursor(pygame.sprite.Sprite):
         # Время неуязвимости курсора (в тиках).
         self.selected_tower = 0
         # Башня, которую сейчас выбрал курсор.
-        self.coins = 1000
+        self.coins = 200
         # Деньги курсора.
         return
 
@@ -434,7 +434,7 @@ class EnemyJack(Enemy):
         # Стреляем в восемь направлений.
         for direction in directions:
             enemy_bullets_list.append(Bullet([self.curr_position[0] + 24, self.curr_position[
-                1] + 24], 100, direction, 8, 20, 2 * fps, enemy_bullets))
+                1] + 24], 100, direction, 8, 200, 2 * fps, enemy_bullets))
         return
 
 
@@ -445,8 +445,8 @@ class EnemyRandom(Enemy):
     def __init__(self, difficulty, *group):
         self.difficulty = difficulty
         super().__init__(random.randint(30, 50 + self.difficulty * 5), random.randint(
-            100, 500 + self.difficulty * 100), random.randint(1, 5 + self.difficulty * 2) * 10, random.randint(
-                1, 10 + self.difficulty * 2) * 5, random.randint(1, 15 - self.difficulty), *group)
+            100, 500 + self.difficulty * 400), random.randint(1, 5 + self.difficulty * 2) * 10, random.randint(
+                1, 10 + self.difficulty * 2) * 5, random.randint(1, max(15 - self.difficulty, 5)), *group)
         # Рандомим характеристики согласно "сложности".
         self.image = EnemyRandom.random_image
         self.cooldown = fps * random.randint(1, 15 - self.difficulty)
@@ -468,7 +468,7 @@ class EnemyRandom(Enemy):
             enemy_bullets_list.append(Bullet([self.curr_position[0] + 24, self.curr_position[
                 1] + 24], random.randint(50, 100 + self.difficulty * 20), [math.sin(
                     random.random() * 2 * math.pi), math.cos(
-                        random.random() * 2 * math.pi)], damage // 2, damage, random.randint(
+                        random.random() * 2 * math.pi)], damage // 2, damage * 10, random.randint(
                             1, 5 + self.difficulty) * fps, enemy_bullets))
         # Рандомим выстрел согласно "сложности".
         return
@@ -649,8 +649,8 @@ class FreezingTower(Tower):
         self.image = FreezingTower.tower_image
         self.range = 16384
         self.frost = 0.666
-        self.damage = 10
-        self.cost = '$ 200'
+        self.damage = 20
+        self.cost = '$ 50'
         return
 
     def update(self):
@@ -694,7 +694,8 @@ class HomingTower(Tower):
         if len(enemies_list) >= 2 and self.stage == 1:
             targets = random.sample(enemies_list, 2)
             # Если есть хотя бы два врага и башня прокачана - берем рандомные цели.
-        elif len(enemies_list) == 1:
+            print(2)
+        elif len(enemies_list) >= 1:
             targets = random.sample(enemies_list, 1)
             # Если нет, но есть хотя бы один враг - берем рандомную цель.
         for target in targets:
@@ -797,9 +798,9 @@ if __name__ == '__main__':
     # Шрифт я стырил с https://www.dafont.com/pixelated.font, мне сказали, что можно.
     road = []
     # Путь врага.
-    field = Field('level2')
+    field = Field('level1')
     # А это поле.
-    spawner = Spawner('level2')
+    spawner = Spawner('level1')
     # Эта штука отвечает за появление врагов.
     enemy_bullets_list = []
     # Здесь хранятся все "пули" врагов.
@@ -847,15 +848,6 @@ if __name__ == '__main__':
                     cursor.attack(current_bullet)
                     # Ударим курсор, если задели его.
                 bullet_iter += 1
-        tower_iter = 0
-        while tower_iter < len(towers_list):
-            current_tower = towers_list[tower_iter]
-            if current_tower.curr_position[0] == -1000:
-                del towers_list[tower_iter]
-            else:
-                current_tower.update()
-                tower_iter += 1
-        # Похожая схема с башнями.
         enemy_iter = 0
         while enemy_iter < len(enemies_list):
             # Цикл для врагов.
@@ -902,6 +894,15 @@ if __name__ == '__main__':
         towers_group.draw(screen)
         field.render(screen)
         cursor_group.draw(screen)
+        tower_iter = 0
+        while tower_iter < len(towers_list):
+            current_tower = towers_list[tower_iter]
+            if current_tower.curr_position[0] == -1000:
+                del towers_list[tower_iter]
+            else:
+                current_tower.update()
+                tower_iter += 1
+        # Похожая схема с башнями.
         enemy_group.draw(screen)
         friendly_bullets.draw(screen)
         for current_enemy in enemies_list:
