@@ -607,14 +607,14 @@ class LaserTower(Tower):
             dist = dx * dx + dy * dy
         if self.target is None or dist > self.range:
             best = None
-            best_dist = self.range + 1
+            best_dist = self.range + 0.1
             for curr_enemy in enemies_list:
                 if curr_enemy.hp == 0:
                     continue
                 dx = curr_enemy.curr_position[0] - self.curr_position[0]
                 dy = curr_enemy.curr_position[1] - self.curr_position[1]
                 dist = dx * dx + dy * dy
-                if dist < best_dist:
+                if dist <= best_dist:
                     best_dist = dist
                     best = curr_enemy
             self.target = best
@@ -635,7 +635,8 @@ class LaserTower(Tower):
     def upgrade(self):
         if super().upgrade():
             self.image = LaserTower.tower_image_ultra
-            # Такое мы уже видели.
+            self.range = 4096
+            # Обновим дальность, чтобы ее было проще контролировать.
         return
 
 
