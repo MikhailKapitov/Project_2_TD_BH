@@ -476,10 +476,10 @@ class EnemyRandom(Enemy):
         self.difficulty = difficulty
         super().__init__(random.randint(30, 50 + self.difficulty * 5), random.randint(
             100, 500 + self.difficulty * 400), random.randint(1, 5 + self.difficulty * 2) * 10, random.randint(
-            1, 10 + self.difficulty * 2) * 5, random.randint(1, max(15 - self.difficulty, 5)), *group)
+            1, 10 + self.difficulty * 2) * 5, random.randint(1, max(15 - self.difficulty, 3)), *group)
         # Рандомим характеристики согласно "сложности".
         self.image = EnemyRandom.random_image
-        self.cooldown = fps * random.randint(1, 15 - self.difficulty)
+        self.cooldown = fps * random.randint(1, max(3, 15 - random.randint(0, self.difficulty)))
         # Он будет стрелять рандомно. Совсем.
 
     def update(self):
@@ -488,7 +488,7 @@ class EnemyRandom(Enemy):
         if self.cooldown <= 0:
             self.fire()
             # Стреляем, если пора стрелять.
-            self.cooldown = fps * random.randint(1, 5)
+            self.cooldown = fps * random.randint(1, max(3, 15 - random.randint(0, self.difficulty)))
         return
 
     def fire(self):
@@ -681,7 +681,6 @@ class LaserTower(Tower):
                 pygame.mixer.music.load('Data/laser.wav')
                 pygame.mixer.music.set_volume(0.01)
                 pygame.mixer.music.play()
-                self.target.attack(self.damage / fps)
                 pygame.draw.line(screen, (128, 128, 128), [self.curr_position[0] + 32, self.curr_position[1] + 32], [
                     self.target.curr_position[0] + 32, self.target.curr_position[1] + 32], 5)
                 self.target.attack(self.damage / fps)
