@@ -309,7 +309,8 @@ class Cursor(pygame.sprite.Sprite):
 
     def update(self, position):
         self.curr_position = position
-        self.rect.topleft = (self.curr_position[0] - 16, self.curr_position[1] - 16)
+        k = int(width / 1920)
+        self.rect.topleft = (self.curr_position[0] - 16 * k, self.curr_position[1] - 16 * k)
         # Обновляем позицию курсора.
         return
 
@@ -379,6 +380,9 @@ class Enemy(pygame.sprite.Sprite):
             self.base_timing += 1
             if self.base_timing == self.base_freq:
                 cursor.hp = max(cursor.hp - self.base_dmg, 0)
+                sound = pygame.mixer.Sound('Data/hit.wav')
+                sound.set_volume(0.3)
+                pygame.mixer.Channel(1).play(sound)
                 if cursor.hp == 0:
                     # Вызов экрана game-over.
                     game_over()
