@@ -309,8 +309,8 @@ class Cursor(pygame.sprite.Sprite):
 
     def update(self, position):
         self.curr_position = position
-        k = int(width / 1920)
-        self.rect.topleft = (self.curr_position[0] - 16 * k, self.curr_position[1] - 16 * k)
+        k = int(width // 60) // 2
+        self.rect.topleft = (self.curr_position[0] - k, self.curr_position[1] - k)
         # Обновляем позицию курсора.
         return
 
