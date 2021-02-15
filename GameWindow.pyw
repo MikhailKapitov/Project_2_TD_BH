@@ -701,7 +701,7 @@ class LaserTower(Tower):
     def upgrade(self):
         if super().upgrade():
             self.image = LaserTower.tower_image_ultra
-            self.range = 4096
+            self.range = 4096 * ((width / 1920) ** 2)
             sound = pygame.mixer.Sound('Data/installation.mp3')
             sound.set_volume(0.2)
             pygame.mixer.Channel(0).play(sound)
