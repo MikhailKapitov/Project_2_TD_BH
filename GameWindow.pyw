@@ -168,9 +168,9 @@ class Field(Board):
             cursor.coins -= shop.products[shop.selected][1]
             self.selected = cell
 
-            pygame.mixer.music.load('Data/installation.mp3')
-            pygame.mixer.music.set_volume(0.2)
-            pygame.mixer.music.play()
+            sound = pygame.mixer.Sound('Data/installation.mp3')
+            sound.set_volume(0.2)
+            pygame.mixer.Channel(0).play(sound)
             # Ставим башню.
         elif self.cells_data[cell[0]][cell[1]] != 1 and self.cells_data[cell[0]][cell[1]] != 0 and self.cells_data[
             cell[0]][cell[1]] != 3:
@@ -319,9 +319,9 @@ class Cursor(pygame.sprite.Sprite):
             # А, нет, он неуязвим. Упс.
             return
         self.hp = max(self.hp - bullet.damage, 0)
-        pygame.mixer.music.load('Data/hit.wav')
-        pygame.mixer.music.set_volume(0.3)
-        pygame.mixer.music.play()
+        sound = pygame.mixer.Sound('Data/hit.wav')
+        sound.set_volume(0.3)
+        pygame.mixer.Channel(1).play(sound)
         # Бьем курсор!
         if self.hp == 0:
             # Вызов экрана game-over.
@@ -584,9 +584,9 @@ class Tower(pygame.sprite.Sprite):
         cursor.coins -= int(self.cost[2:])
         self.cost = 'MAXED OUT'
         self.stage += 1
-        pygame.mixer.music.load('Data/installation.mp3')
-        pygame.mixer.music.set_volume(0.2)
-        pygame.mixer.music.play()
+        sound = pygame.mixer.Sound('Data/installation.mp3')
+        sound.set_volume(0.2)
+        pygame.mixer.Channel(0).play(sound)
         # Улучшим башню и отобразим, что у нее макс. лвл.
         return True
 
@@ -606,9 +606,9 @@ class PlusTower(Tower):
         return
 
     def fire(self):
-        pygame.mixer.music.load('Data/plus.wav')
-        pygame.mixer.music.set_volume(0.01)
-        pygame.mixer.music.play()
+        sound = pygame.mixer.Sound('Data/plus.wav')
+        sound.set_volume(0.01)
+        pygame.mixer.Channel(2).play(sound)
         if self.stage == 0:
             directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]
         else:
@@ -631,9 +631,9 @@ class PlusTower(Tower):
         if super().upgrade():
             self.image = PlusTower.tower_image_ultra
 
-            pygame.mixer.music.load('Data/installation.mp3')
-            pygame.mixer.music.set_volume(0.2)
-            pygame.mixer.music.play()
+            sound = pygame.mixer.Sound('Data/installation.mp3')
+            sound.set_volume(0.2)
+            pygame.mixer.Channel(0).play(sound)
             # Обновим спрайт, если башня улучшена.
         return
 
@@ -649,7 +649,7 @@ class LaserTower(Tower):
     def __init__(self, position, *group):
         super().__init__(-1, position, *group)
         self.image = LaserTower.tower_image
-        self.range = 65536
+        self.range = 65536 * ((width / 1920) ** 2)
         self.damage = 60
         self.cost = '$ 200'
         self.target = None
@@ -676,31 +676,35 @@ class LaserTower(Tower):
             self.target = best
         # Короче, тут мы ищем цель. Башня пытается либо продолжить стрелять во врага, либо переключиться на ближайшего.
         if self.target is not None:
+            k = 32
+            if width == 1280:
+                k = 21
             if self.stage == 0:
                 # Белый лазер - обычная башня наносит урон.
-                pygame.mixer.music.load('Data/laser.wav')
-                pygame.mixer.music.set_volume(0.01)
-                pygame.mixer.music.play()
-                pygame.draw.line(screen, (128, 128, 128), [self.curr_position[0] + 32, self.curr_position[1] + 32], [
-                    self.target.curr_position[0] + 32, self.target.curr_position[1] + 32], 5)
+                sound1 = pygame.mixer.Sound('Data/laser.wav')
+                sound1.set_volume(0.01)
+                pygame.mixer.Channel(3).play(sound1)
+                pygame.draw.line(screen, (128, 128, 128), [self.curr_position[0] + k, self.curr_position[1] + k], [
+                    self.target.curr_position[0] + k, self.target.curr_position[1] + k], 5)
                 self.target.attack(self.damage / fps)
             else:
                 # Серый лазер - прокаченная башня останавливает врага.
-                pygame.mixer.music.load('Data/laser_stage2.wav')
-                pygame.mixer.music.set_volume(0.01)
-                pygame.mixer.music.play()
+                sound2 = pygame.mixer.Sound('Data/laser_stage2.wav')
+                sound2.set_volume(0.01)
+                pygame.mixer.Channel(6).play(sound2)
                 self.target.freeze(0)
-                pygame.draw.line(screen, (64, 64, 64), [self.curr_position[0] + 32, self.curr_position[1] + 32], [
-                    self.target.curr_position[0] + 32, self.target.curr_position[1] + 32], 5)
+                pygame.draw.line(screen, (64, 64, 64), [self.curr_position[0] + k, self.curr_position[1] + k], [
+                    self.target.curr_position[0] + k, self.target.curr_position[1] + k], 5)
+
         return
 
     def upgrade(self):
         if super().upgrade():
             self.image = LaserTower.tower_image_ultra
             self.range = 4096
-            pygame.mixer.music.load('Data/installation.mp3')
-            pygame.mixer.music.set_volume(0.2)
-            pygame.mixer.music.play()
+            sound = pygame.mixer.Sound('Data/installation.mp3')
+            sound.set_volume(0.2)
+            pygame.mixer.Channel(0).play(sound)
             # Обновим дальность, чтобы ее было проще контролировать.
         return
 
@@ -717,7 +721,7 @@ class FreezingTower(Tower):
     def __init__(self, position, *group):
         super().__init__(-1, position, *group)
         self.image = FreezingTower.tower_image
-        self.range = 16384
+        self.range = 16384 * ((width / 1920) ** 2)
         self.frost = 0.666
         self.damage = 20
         self.cost = '$ 50'
@@ -741,9 +745,9 @@ class FreezingTower(Tower):
         if super().upgrade():
             self.image = FreezingTower.tower_image_ultra
             self.frost = 0.5
-            pygame.mixer.music.load('Data/installation.mp3')
-            pygame.mixer.music.set_volume(0.2)
-            pygame.mixer.music.play()
+            sound = pygame.mixer.Sound('Data/installation.mp3')
+            sound.set_volume(0.2)
+            pygame.mixer.Channel(0).play(sound)
             # Помимо спрайта, обновим силу мороза.
         return
 
@@ -778,9 +782,9 @@ class HomingTower(Tower):
             friendly_bullets_list.append(HomingBullet([
                 self.curr_position[0] - int(width / 60), self.curr_position[1] - int(width / 60)], target,
                 friendly_bullets))
-            pygame.mixer.music.load('Data/homing.wav')
-            pygame.mixer.music.set_volume(0.2)
-            pygame.mixer.music.play()
+            sound = pygame.mixer.Sound('Data/homing.wav')
+            sound.set_volume(0.2)
+            pygame.mixer.Channel(4).play(sound)
             # Стреляем!
         if len(targets) == 0:
             self.cooldown = 0
@@ -791,9 +795,9 @@ class HomingTower(Tower):
         if super().upgrade():
             self.image = HomingTower.tower_image_ultra
             self.frequency = 5 * fps
-            pygame.mixer.music.load('Data/installation.mp3')
-            pygame.mixer.music.set_volume(0.2)
-            pygame.mixer.music.play()
+            sound = pygame.mixer.Sound('Data/installation.mp3')
+            sound.set_volume(0.2)
+            pygame.mixer.Channel(0).play(sound)
             # При улучшении мы также удваиваем скорость стрельбы.
         return
 
@@ -946,9 +950,10 @@ def game(level):
             # Цикл для врагов.
             current_enemy = enemies_list[enemy_iter]
             if current_enemy.hp == 0:
-                pygame.mixer.music.load('Data/death.wav')
-                pygame.mixer.music.set_volume(0.3)
-                pygame.mixer.music.play()
+                sound = pygame.mixer.Sound('Data/death.wav')
+                sound.set_volume(0.3)
+                pygame.mixer.Channel(5).play(sound)
+
                 del enemies_list[enemy_iter]
                 # Удалим врага, если он умер.
             else:
@@ -1106,8 +1111,15 @@ def main_menu():
                 item.kill()
                 enemy_bullets.clear(screen, background)
                 enemy_bullets.draw(screen)
+            for item in base_group:
+                item.kill()
+                base_group.clear(screen, background)
+                base_group.draw(screen)
             # Отключаем видимость курсора, чтобы был только наш в игре
             pygame.mouse.set_visible(False)
+            global overr, winn
+            overr = False
+            winn = False
             game(lvl)
         else:
             main_menu()
