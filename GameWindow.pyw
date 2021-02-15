@@ -653,7 +653,7 @@ class LaserTower(Tower):
     def __init__(self, position, *group):
         super().__init__(-1, position, *group)
         self.image = LaserTower.tower_image
-        self.range = 65536 * ((width / 1920) ** 2)
+        self.range = 65536.5 * ((width / 1920) ** 2)
         self.damage = 60
         self.cost = '$ 200'
         self.target = None
@@ -667,7 +667,7 @@ class LaserTower(Tower):
             dist = dx * dx + dy * dy
         if self.target is None or dist > self.range:
             best = None
-            best_dist = self.range + 0.1
+            best_dist = self.range
             for curr_enemy in enemies_list:
                 if curr_enemy.hp == 0:
                     continue
@@ -705,7 +705,7 @@ class LaserTower(Tower):
     def upgrade(self):
         if super().upgrade():
             self.image = LaserTower.tower_image_ultra
-            self.range = 4096 * ((width / 1920) ** 2)
+            self.range = 4096.5 * ((width / 1920) ** 2)
             sound = pygame.mixer.Sound('Data/installation.mp3')
             sound.set_volume(0.2)
             pygame.mixer.Channel(0).play(sound)

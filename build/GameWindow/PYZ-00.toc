@@ -8,38 +8,6 @@
    'c:\\users\\mikhail '
    'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\_compat.py',
    'PYMODULE'),
-  ('pkg_resources._vendor.packaging.markers',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\markers.py',
-   'PYMODULE'),
-  ('pkg_resources._vendor.packaging.version',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\version.py',
-   'PYMODULE'),
-  ('pkg_resources._vendor.packaging.specifiers',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\specifiers.py',
-   'PYMODULE'),
-  ('pkg_resources._vendor.appdirs',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\appdirs.py',
-   'PYMODULE'),
-  ('ctypes',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\ctypes\\__init__.py',
-   'PYMODULE'),
-  ('ctypes._endian',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\ctypes\\_endian.py',
-   'PYMODULE'),
-  ('struct',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\struct.py',
-   'PYMODULE'),
-  ('pkg_resources._vendor.packaging',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\__init__.py',
-   'PYMODULE'),
   ('pkg_resources._vendor.pyparsing',
    'c:\\users\\mikhail '
    'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\pyparsing.py',
@@ -860,6 +828,10 @@
    'c:\\users\\mikhail '
    'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\_compat_pickle.py',
    'PYMODULE'),
+  ('struct',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\struct.py',
+   'PYMODULE'),
   ('ctypes.util',
    'c:\\users\\mikhail '
    'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\ctypes\\util.py',
@@ -883,6 +855,14 @@
   ('ctypes.macholib.framework',
    'c:\\users\\mikhail '
    'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\ctypes\\macholib\\framework.py',
+   'PYMODULE'),
+  ('ctypes',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\ctypes\\__init__.py',
+   'PYMODULE'),
+  ('ctypes._endian',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\ctypes\\_endian.py',
    'PYMODULE'),
   ('socket',
    'c:\\users\\mikhail '
@@ -988,17 +968,13 @@
    'c:\\users\\mikhail '
    'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\string.py',
    'PYMODULE'),
-  ('pkg_resources._vendor.packaging.tags',
+  ('pkg_resources._vendor.packaging._structures',
    'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\tags.py',
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\_structures.py',
    'PYMODULE'),
-  ('pkg_resources._vendor.packaging.utils',
+  ('pkg_resources._vendor.packaging.markers',
    'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\utils.py',
-   'PYMODULE'),
-  ('pkg_resources._vendor.six',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\six.py',
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\markers.py',
    'PYMODULE'),
   ('pkg_resources._vendor.packaging.requirements',
    'c:\\users\\mikhail '
@@ -1008,13 +984,37 @@
    'c:\\users\\mikhail '
    'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\__about__.py',
    'PYMODULE'),
+  ('pkg_resources._vendor.packaging',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\__init__.py',
+   'PYMODULE'),
+  ('pkg_resources._vendor.six',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\six.py',
+   'PYMODULE'),
+  ('pkg_resources._vendor.packaging.utils',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\utils.py',
+   'PYMODULE'),
+  ('pkg_resources._vendor.packaging.tags',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\tags.py',
+   'PYMODULE'),
+  ('pkg_resources._vendor.appdirs',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\appdirs.py',
+   'PYMODULE'),
+  ('pkg_resources._vendor.packaging.version',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\version.py',
+   'PYMODULE'),
   ('pkg_resources._vendor',
    'c:\\users\\mikhail '
    'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\__init__.py',
    'PYMODULE'),
-  ('pkg_resources._vendor.packaging._structures',
+  ('pkg_resources._vendor.packaging.specifiers',
    'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\_structures.py',
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\pkg_resources\\_vendor\\packaging\\specifiers.py',
    'PYMODULE'),
   ('sysconfig',
    'c:\\users\\mikhail '
@@ -1096,13 +1096,13 @@
    'c:\\users\\mikhail '
    'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\__future__.py',
    'PYMODULE'),
-  ('_py_abc',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\_py_abc.py',
-   'PYMODULE'),
   ('stringprep',
    'c:\\users\\mikhail '
    'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\stringprep.py',
+   'PYMODULE'),
+  ('_py_abc',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\_py_abc.py',
    'PYMODULE'),
   ('OptionsWindow',
    'C:\\Users\\Mikhail Kapitov\\Documents\\Programming\\Yandex.Lyceum\\Project '
@@ -1336,25 +1336,53 @@
    'c:\\users\\mikhail '
    'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\__init__.py',
    'PYMODULE'),
-  ('setuptools._vendor.pyparsing',
+  ('setuptools._vendor.packaging.markers',
    'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\pyparsing.py',
-   'PYMODULE'),
-  ('setuptools._vendor.packaging.tags',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\tags.py',
-   'PYMODULE'),
-  ('setuptools._vendor.packaging._structures',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\_structures.py',
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\markers.py',
    'PYMODULE'),
   ('setuptools._vendor.packaging',
    'c:\\users\\mikhail '
    'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\__init__.py',
    'PYMODULE'),
+  ('setuptools._vendor.packaging.specifiers',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\specifiers.py',
+   'PYMODULE'),
+  ('setuptools._vendor.packaging._structures',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\_structures.py',
+   'PYMODULE'),
+  ('setuptools._vendor.packaging.utils',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\utils.py',
+   'PYMODULE'),
+  ('setuptools._vendor.packaging.__about__',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\__about__.py',
+   'PYMODULE'),
+  ('setuptools._vendor',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\__init__.py',
+   'PYMODULE'),
+  ('setuptools._vendor.packaging.tags',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\tags.py',
+   'PYMODULE'),
+  ('setuptools._vendor.packaging._compat',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\_compat.py',
+   'PYMODULE'),
   ('setuptools._vendor.ordered_set',
    'c:\\users\\mikhail '
    'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\ordered_set.py',
+   'PYMODULE'),
+  ('setuptools._vendor.packaging.requirements',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\requirements.py',
+   'PYMODULE'),
+  ('setuptools._vendor.pyparsing',
+   'c:\\users\\mikhail '
+   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\pyparsing.py',
    'PYMODULE'),
   ('setuptools._vendor.six',
    'c:\\users\\mikhail '
@@ -1363,34 +1391,6 @@
   ('setuptools._vendor.packaging.version',
    'c:\\users\\mikhail '
    'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\version.py',
-   'PYMODULE'),
-  ('setuptools._vendor.packaging.specifiers',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\specifiers.py',
-   'PYMODULE'),
-  ('setuptools._vendor.packaging.__about__',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\__about__.py',
-   'PYMODULE'),
-  ('setuptools._vendor.packaging._compat',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\_compat.py',
-   'PYMODULE'),
-  ('setuptools._vendor.packaging.requirements',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\requirements.py',
-   'PYMODULE'),
-  ('setuptools._vendor.packaging.utils',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\utils.py',
-   'PYMODULE'),
-  ('setuptools._vendor.packaging.markers',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\packaging\\markers.py',
-   'PYMODULE'),
-  ('setuptools._vendor',
-   'c:\\users\\mikhail '
-   'kapitov\\appdata\\local\\programs\\python\\python38\\lib\\site-packages\\setuptools\\_vendor\\__init__.py',
    'PYMODULE'),
   ('setuptools.msvc',
    'c:\\users\\mikhail '
